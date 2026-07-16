@@ -33,6 +33,15 @@ const ENTRIES: DemoMeta[] = [
     tags: ["GPU", "animation"],
     packages: ["@vectojs/core", "@vectojs/ui"],
   },
+  {
+    id: "three-panel",
+    title: "3D Panel",
+    description:
+      "A live VectoJS UI mapped onto a Three.js plane — orbit the camera, and raycast pointer events drive the canvas controls in 3D.",
+    category: "3d-xr",
+    tags: ["Three.js", "WebGL", "raycast"],
+    packages: ["@vectojs/core", "@vectojs/ui", "@vectojs/three"],
+  },
 ];
 
 export const DEMOS: Demo[] = ENTRIES.map((e) => ({

@@ -27,7 +27,8 @@
     "@vectojs/three": "0.1.6",
     "@vectojs/ui": "1.9.5",
     "astro": "^7.0.3",
-    "codemirror": "^6.0.2"
+    "codemirror": "^6.0.2",
+    "three": "0.160.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
