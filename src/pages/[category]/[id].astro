@@ -1,0 +1,22 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Shell from "../../components/Shell.astro";
+import { DEMOS } from "../../registry";
+import type { Demo } from "../../registry";
+
+export function getStaticPaths() {
+  return DEMOS.map((demo) => ({
+    params: { category: demo.category, id: demo.id },
+    props: { demo },
+  }));
+}
+
+interface Props {
+  demo: Demo;
+}
+const { demo } = Astro.props;
+---
+
+<Layout title={`Motif — ${demo.title}`}>
+  <Shell demo={demo} />
+</Layout>

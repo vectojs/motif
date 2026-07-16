@@ -1,4 +1,12 @@
-import { readdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
+import {
+  readdirSync,
+  readFileSync,
+  existsSync,
+  writeFileSync,
+  mkdirSync,
+  cpSync,
+  rmSync,
+} from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,14 +48,45 @@ function renderModule(map: Record<string, DemoSources>): string {
   );
 }
 
+/**
+ * Mirror each authored demo dir into `public/demos/<id>/` so it is served as a
+ * real static route (`/demos/<id>/`) with a genuine document URL. This is what
+ * the sandboxed iframe loads via `src` — a `srcdoc` iframe has base URL
+ * `about:srcdoc`, so the demo's `./demo.js` and `/no-ff-webgpu.js` script refs
+ * can't resolve there. `src/demos/` stays the single committed source of truth;
+ * `public/demos/` is generated (gitignored) and rebuilt from scratch each run.
+ */
+function copyDemosToPublic(demosRoot: string, publicDemos: string): number {
+  rmSync(publicDemos, { recursive: true, force: true });
+  if (!existsSync(demosRoot)) return 0;
+  let n = 0;
+  for (const entry of readdirSync(demosRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const dir = join(demosRoot, entry.name);
+    if (
+      !existsSync(join(dir, "demo.js")) ||
+      !existsSync(join(dir, "index.html"))
+    )
+      continue;
+    mkdirSync(join(publicDemos, entry.name), { recursive: true });
+    cpSync(dir, join(publicDemos, entry.name), { recursive: true });
+    n++;
+  }
+  return n;
+}
+
 function main(): void {
   const here = dirname(fileURLToPath(import.meta.url));
   const demosRoot = join(here, "..", "src", "demos");
   const outPath = join(here, "..", "src", "registry", "generated-sources.ts");
   const map = collectSources(demosRoot);
   writeFileSync(outPath, renderModule(map));
+  const copied = copyDemosToPublic(
+    demosRoot,
+    join(here, "..", "public", "demos"),
+  );
   console.log(
-    `inline-sources: wrote ${Object.keys(map).length} demo source(s) to ${outPath}`,
+    `inline-sources: wrote ${Object.keys(map).length} demo source(s) to ${outPath}; mirrored ${copied} demo dir(s) to public/demos/`,
   );
 }
 

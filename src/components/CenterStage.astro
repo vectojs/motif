@@ -36,15 +36,78 @@ const { demo } = Astro.props;
     </div>
   </div>
 
-  {/* The live VectoJS canvas island mounts into this frame in Task 7. */}
-  <div class="stage-viewport" data-viewport data-demo-id={demo.id}>
-    <span class="viewport-badge">&lt;canvas&gt; · VectoJS island</span>
+  {
+    /*
+    The demo runs in a sandboxed iframe pointed at its static route
+    `/demos/<id>/` (the authored files mirrored into public/ by inline-sources).
+    A real document URL is required so the demo's `./demo.js` and
+    `/no-ff-webgpu.js` script refs resolve — a `srcdoc` frame is base
+    `about:srcdoc` and cannot load them. `allow-same-origin` is REQUIRED too:
+    without it the frame gets an opaque origin, under which ES-module scripts +
+    importmaps refuse to execute (module fetch runs in CORS mode and a plain
+    static route sends no CORS headers), so the demo never boots. Same-origin
+    framing is acceptable here because the parent is a secretless static gallery
+    and demos are PR-reviewed first-party code; when v2 adds user-editable code
+    it must move to a separate origin for real isolation. Served files ARE the
+    code-panel files, so shown == run.
+  */
+  }
+  <div class="viewport" data-viewport data-demo-id={demo.id}>
+    <iframe
+      class="demo-frame"
+      data-demo-frame
+      title={`${demo.title} live demo`}
+      sandbox="allow-scripts allow-same-origin"
+      loading="eager"
+      src={`/demos/${demo.id}/`}></iframe>
   </div>
 
-  <div class="viewport-row" role="group" aria-label="Preview width">
+  <div class="viewport-toolbar" role="group" aria-label="Preview width">
     <button class="vp active" data-vp="fluid">Responsive</button>
     <button class="vp" data-vp="360">360</button>
     <button class="vp" data-vp="768">768</button>
     <button class="vp" data-vp="1280">1280</button>
+    <button class="vp vp-run" data-run>▶ Run</button>
   </div>
 </main>
+
+<script>
+  const viewport = document.querySelector<HTMLElement>("[data-viewport]");
+  const frame = document.querySelector<HTMLIFrameElement>("[data-demo-frame]");
+  if (viewport && frame) {
+    const src = frame.getAttribute("src") ?? "";
+    const title = frame.title;
+
+    const runButton = document.querySelector<HTMLButtonElement>("[data-run]");
+    runButton?.addEventListener("click", () => {
+      viewport.querySelector("[data-demo-frame]")?.remove();
+      const next = document.createElement("iframe");
+      next.className = "demo-frame";
+      next.dataset.demoFrame = "";
+      next.title = title;
+      next.setAttribute("sandbox", "allow-scripts allow-same-origin");
+      next.setAttribute("loading", "eager");
+      next.setAttribute("src", src);
+      viewport.appendChild(next);
+    });
+
+    const widths: Record<string, string> = {
+      fluid: "100%",
+      "360": "360px",
+      "768": "768px",
+      "1280": "1280px",
+    };
+    for (const button of document.querySelectorAll<HTMLButtonElement>(
+      "[data-vp]",
+    )) {
+      button.addEventListener("click", () => {
+        for (const b of document.querySelectorAll("[data-vp]"))
+          b.classList.remove("active");
+        button.classList.add("active");
+        const live =
+          viewport.querySelector<HTMLIFrameElement>("[data-demo-frame]");
+        if (live) live.style.width = widths[button.dataset.vp ?? "fluid"];
+      });
+    }
+  }
+</script>
