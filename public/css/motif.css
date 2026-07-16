@@ -55,10 +55,29 @@ a {
   display: grid;
   grid-template-columns: 248px 1fr 420px;
   grid-template-rows: 52px 1fr;
+  grid-template-areas:
+    "top top  top"
+    "nav main code";
   height: 100vh;
 }
 .shell > .topbar {
-  grid-column: 1 / -1;
+  grid-area: top;
+}
+.shell > .left-nav {
+  grid-area: nav;
+}
+.shell > .center-stage {
+  grid-area: main;
+}
+.shell > .code-panel {
+  grid-area: code;
+}
+/* Drawer toggle: a hidden checkbox (in Shell, before .left-nav) driven by the
+   topbar hamburger <label>. Only surfaces < 920px; on desktop the nav is a
+   static grid column and the toggle is display:none. */
+.nav-toggle,
+.nav-toggle-btn {
+  display: none;
 }
 
 .topbar {
@@ -503,4 +522,69 @@ a {
   color: var(--text-faint, #5a6472);
   font-size: 13px;
   list-style: none;
+}
+
+@media (max-width: 1180px) {
+  .shell {
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 52px 1fr 40vh;
+    grid-template-areas:
+      "top  top"
+      "nav  main"
+      "nav  code";
+  }
+}
+
+@media (max-width: 920px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 52px 1fr 42vh;
+    grid-template-areas:
+      "top"
+      "main"
+      "code";
+  }
+  .nav-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    background: var(--raised);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 15px;
+  }
+  .shell > .left-nav {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    bottom: 0;
+    width: 264px;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .nav-toggle:checked ~ .left-nav {
+    transform: translateX(0);
+  }
+  .nav-scrim {
+    display: none;
+    position: fixed;
+    inset: 52px 0 0 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+  }
+  .nav-toggle:checked ~ .nav-scrim {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell > .left-nav {
+    transition: none;
+  }
 }

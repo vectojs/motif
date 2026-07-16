@@ -12,8 +12,11 @@ const { demo } = Astro.props;
 ---
 
 <div class="shell">
+  <input type="checkbox" id="nav-toggle" class="nav-toggle" hidden />
   <TopBar />
   <LeftNav activeId={demo.id} />
+  <label for="nav-toggle" class="nav-scrim" aria-label="Close navigation"
+  ></label>
   <CenterStage demo={demo} />
   <CodePanel demo={demo} />
 </div>
