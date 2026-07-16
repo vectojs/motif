@@ -16,6 +16,15 @@ const ENTRIES: DemoMeta[] = [
     packages: ["@vectojs/core", "@vectojs/ui"],
   },
   {
+    id: "virtual-list",
+    title: "Virtual List",
+    description:
+      "A 5,000-row list that mounts only the visible window plus overscan — smooth momentum scroll inside a canvas card.",
+    category: "layout",
+    tags: ["virtualization", "scroll"],
+    packages: ["@vectojs/core", "@vectojs/ui"],
+  },
+  {
     id: "particle-button",
     title: "Particle Button",
     description:
