@@ -14,7 +14,7 @@
     "check:registry": "bun run scripts/check-registry.ts",
     "check:versions": "bun run scripts/check-versions.ts",
     "test": "bun test",
-    "test:smoke": "bun run scripts/test-smoke.ts"
+    "test:smoke": "bun run test/smoke.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

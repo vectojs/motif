@@ -10,3 +10,4 @@ node_modules/
 .wrangler/
 tmp/
 /public/demos/
+/test/__screenshots__/
