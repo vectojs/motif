@@ -61,6 +61,13 @@ function initSearch(): void {
 
   function render(): void {
     list.innerHTML = "";
+    if (results.length === 0 && input.value.trim() !== "") {
+      const li = document.createElement("li");
+      li.className = "search-empty";
+      li.textContent = `No components or effects match “${input.value.trim()}”.`;
+      list.appendChild(li);
+      return;
+    }
     results.forEach((e, i) => {
       const li = document.createElement("li");
       li.className = "search-result" + (i === active ? " active" : "");

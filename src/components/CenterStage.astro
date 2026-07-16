@@ -60,6 +60,14 @@ const { demo } = Astro.props;
       sandbox="allow-scripts allow-same-origin"
       loading="eager"
       src={`/demos/${demo.id}/`}></iframe>
+    <div class="viewport-status" data-status hidden>
+      <div class="vs-spinner" data-status-spinner aria-hidden="true"></div>
+      <p class="vs-msg" data-status-msg role="status"></p>
+      <button class="vs-retry" data-status-retry hidden>Retry</button>
+    </div>
+    <div class="viewport-note" data-cpu-note hidden>
+      Running on CPU fallback
+    </div>
   </div>
 
   <div class="viewport-toolbar" role="group" aria-label="Preview width">
@@ -73,23 +81,104 @@ const { demo } = Astro.props;
 
 <script>
   const viewport = document.querySelector<HTMLElement>("[data-viewport]");
-  const frame = document.querySelector<HTMLIFrameElement>("[data-demo-frame]");
-  if (viewport && frame) {
-    const src = frame.getAttribute("src") ?? "";
-    const title = frame.title;
+  const initial =
+    document.querySelector<HTMLIFrameElement>("[data-demo-frame]");
+  const status = document.querySelector<HTMLElement>("[data-status]");
+  const statusMsg = document.querySelector<HTMLElement>("[data-status-msg]");
+  const statusSpinner = document.querySelector<HTMLElement>(
+    "[data-status-spinner]",
+  );
+  const statusRetry = document.querySelector<HTMLButtonElement>(
+    "[data-status-retry]",
+  );
 
-    const runButton = document.querySelector<HTMLButtonElement>("[data-run]");
-    runButton?.addEventListener("click", () => {
-      viewport.querySelector("[data-demo-frame]")?.remove();
+  if (viewport && initial && status && statusMsg && statusSpinner) {
+    const src = initial.getAttribute("src") ?? "";
+    const title = initial.title;
+    let currentWidth = "100%";
+
+    function showStatus(msg: string, spinning: boolean, retry: boolean) {
+      statusMsg!.textContent = msg;
+      statusSpinner!.hidden = !spinning;
+      if (statusRetry) statusRetry.hidden = !retry;
+      status!.hidden = false;
+    }
+    function hideStatus() {
+      status!.hidden = true;
+    }
+
+    function wire(frame: HTMLIFrameElement) {
+      showStatus("Loading packages from esm.sh…", true, false);
+      // A demo is only "loaded" once its module executed and the engine
+      // appended a second (WebGL point-layer) canvas; a bare document with the
+      // authored <canvas> would false-positive. If neither the load handler nor
+      // that signal arrives in time, the esm.sh fetch is presumed unreachable.
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        fn();
+      };
+      const timeout = window.setTimeout(() => {
+        settle(() =>
+          showStatus("Failed to load packages from esm.sh.", false, true),
+        );
+      }, 12000);
+
+      frame.addEventListener("load", () => {
+        const win = frame.contentWindow;
+        if (!win) return;
+        // Same-origin frame: relay the demo's uncaught errors to an error panel
+        // instead of leaving a blank canvas.
+        win.addEventListener("error", (e) =>
+          settle(() => {
+            window.clearTimeout(timeout);
+            showStatus(`Demo error: ${e.message}`, false, true);
+          }),
+        );
+        win.addEventListener("unhandledrejection", () =>
+          settle(() => {
+            window.clearTimeout(timeout);
+            showStatus(
+              "Demo failed to start (module load error).",
+              false,
+              true,
+            );
+          }),
+        );
+        const check = window.setInterval(() => {
+          const canvases = win.document.querySelectorAll("canvas");
+          if (canvases.length >= 2) {
+            window.clearInterval(check);
+            settle(() => {
+              window.clearTimeout(timeout);
+              hideStatus();
+            });
+          }
+        }, 200);
+        window.setTimeout(() => window.clearInterval(check), 12000);
+      });
+    }
+
+    function mount() {
+      viewport!.querySelector("[data-demo-frame]")?.remove();
       const next = document.createElement("iframe");
       next.className = "demo-frame";
       next.dataset.demoFrame = "";
       next.title = title;
       next.setAttribute("sandbox", "allow-scripts allow-same-origin");
       next.setAttribute("loading", "eager");
+      next.style.width = currentWidth;
       next.setAttribute("src", src);
-      viewport.appendChild(next);
-    });
+      viewport!.appendChild(next);
+      wire(next);
+    }
+
+    wire(initial);
+    statusRetry?.addEventListener("click", mount);
+    document
+      .querySelector<HTMLButtonElement>("[data-run]")
+      ?.addEventListener("click", mount);
 
     const widths: Record<string, string> = {
       fluid: "100%",
@@ -104,10 +193,16 @@ const { demo } = Astro.props;
         for (const b of document.querySelectorAll("[data-vp]"))
           b.classList.remove("active");
         button.classList.add("active");
+        currentWidth = widths[button.dataset.vp ?? "fluid"];
         const live =
-          viewport.querySelector<HTMLIFrameElement>("[data-demo-frame]");
-        if (live) live.style.width = widths[button.dataset.vp ?? "fluid"];
+          viewport!.querySelector<HTMLIFrameElement>("[data-demo-frame]");
+        if (live) live.style.width = currentWidth;
       });
     }
+
+    // WebGPU-absent (incl. the Firefox shim) means the particle sim runs on the
+    // CPU backend — surface it so a viewer knows the demo isn't GPU-accelerated.
+    const cpuNote = document.querySelector<HTMLElement>("[data-cpu-note]");
+    if (cpuNote && !("gpu" in navigator)) cpuNote.hidden = false;
   }
 </script>
