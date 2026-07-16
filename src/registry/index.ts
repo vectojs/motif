@@ -1,8 +1,11 @@
 import type { Demo } from "./types";
+import { GENERATED_SOURCES } from "./generated-sources";
 
 export type { Demo, DemoCategory } from "./types";
 
-export const DEMOS: Demo[] = [
+type DemoMeta = Omit<Demo, "moduleSource" | "htmlSource">;
+
+const ENTRIES: DemoMeta[] = [
   {
     id: "particle-button",
     title: "Particle Button",
@@ -11,7 +14,11 @@ export const DEMOS: Demo[] = [
     category: "effects",
     tags: ["GPU", "animation"],
     packages: ["@vectojs/core"],
-    moduleSource: "",
-    htmlSource: "",
   },
 ];
+
+export const DEMOS: Demo[] = ENTRIES.map((e) => ({
+  ...e,
+  moduleSource: GENERATED_SOURCES[e.id]?.moduleSource ?? "",
+  htmlSource: GENERATED_SOURCES[e.id]?.htmlSource ?? "",
+}));

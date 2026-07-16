@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "inline:sources": "bun run scripts/inline-sources.ts",
+    "build": "bun run inline:sources && astro build",
     "preview": "astro preview",
     "check": "astro check",
     "format:check": "prettier --check .",
