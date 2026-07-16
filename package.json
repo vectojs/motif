@@ -12,7 +12,7 @@
     "lint": "oxlint --deny-warnings src",
     "check:registry": "bun run scripts/check-registry.ts",
     "check:versions": "bun run scripts/check-versions.ts",
-    "test": "bun test src",
+    "test": "bun test",
     "test:smoke": "bun run scripts/test-smoke.ts"
   },
   "dependencies": {
