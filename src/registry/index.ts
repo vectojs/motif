@@ -13,7 +13,7 @@ const ENTRIES: DemoMeta[] = [
       "A button that emits a GPU-simulated spark burst on click, with a transparent CPU fallback.",
     category: "effects",
     tags: ["GPU", "animation"],
-    packages: ["@vectojs/core"],
+    packages: ["@vectojs/core", "@vectojs/ui"],
   },
 ];
 
