@@ -1,0 +1,19 @@
+---
+import type { Demo } from "../registry";
+import TopBar from "./TopBar.astro";
+import LeftNav from "./LeftNav.astro";
+import CenterStage from "./CenterStage.astro";
+import CodePanel from "./CodePanel.astro";
+
+interface Props {
+  demo: Demo;
+}
+const { demo } = Astro.props;
+---
+
+<div class="shell">
+  <TopBar />
+  <LeftNav activeId={demo.id} />
+  <CenterStage demo={demo} />
+  <CodePanel demo={demo} />
+</div>

@@ -1,0 +1,41 @@
+---
+import { DEMOS, type DemoCategory } from "../registry";
+
+interface Props {
+  activeId?: string;
+}
+const { activeId } = Astro.props;
+
+const GROUPS: { category: DemoCategory; label: string }[] = [
+  { category: "controls", label: "Controls" },
+  { category: "layout", label: "Layout" },
+  { category: "effects", label: "Effects" },
+  { category: "3d-xr", label: "3D · XR" },
+];
+---
+
+<nav class="left-nav" aria-label="Demo catalog">
+  {
+    GROUPS.map(({ category, label }) => {
+      const items = DEMOS.filter((d) => d.category === category);
+      if (items.length === 0) return null;
+      return (
+        <div class="nav-group">
+          <div class="nav-label">
+            {label} <span class="count">{items.length}</span>
+          </div>
+          {items.map((d) => (
+            <a
+              class:list={["nav-item", { active: d.id === activeId }]}
+              href={`/${d.category}/${d.id}`}
+              aria-current={d.id === activeId ? "page" : undefined}
+            >
+              {d.title}
+              {d.tags[0] && <span class="chip">{d.tags[0]}</span>}
+            </a>
+          ))}
+        </div>
+      );
+    })
+  }
+</nav>

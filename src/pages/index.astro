@@ -1,17 +1,13 @@
 ---
+import Layout from "../layouts/Layout.astro";
+import Shell from "../components/Shell.astro";
+import { DEMOS } from "../registry";
+
+// The landing page features the first registered demo; per-demo routes
+// (/{category}/{id}) are generated in Task 7.
+const demo = DEMOS[0];
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Motif — VectoJS component & effect gallery</title>
-  </head>
-  <body>
-    <main>
-      <h1>Motif</h1>
-      <p>VectoJS component &amp; effect gallery — scaffolding.</p>
-    </main>
-  </body>
-</html>
+<Layout title={`Motif — ${demo.title}`}>
+  <Shell demo={demo} />
+</Layout>

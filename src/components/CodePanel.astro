@@ -1,0 +1,48 @@
+---
+import type { Demo } from "../registry";
+
+interface Props {
+  demo: Demo;
+}
+const { demo } = Astro.props;
+---
+
+<section class="code-panel" aria-label="Demo source">
+  <div class="code-head">
+    <div class="code-tabs" role="tablist" aria-label="Source files">
+      <button
+        class="code-tab active"
+        role="tab"
+        aria-selected="true"
+        data-code-tab="module">demo.js</button
+      >
+      <button
+        class="code-tab"
+        role="tab"
+        aria-selected="false"
+        data-code-tab="html">index.html</button
+      >
+    </div>
+    <button class="code-copy" type="button" data-copy>Copy</button>
+    <button class="code-run" type="button" data-run>▶ Run</button>
+  </div>
+
+  {
+    /* The read-only CodeMirror editors mount in Task 8, seeded from these
+       raw source blocks (which are the exact bytes the iframe runs). */
+  }
+  <div class="code-body">
+    <pre
+      class="code-source active"
+      data-code-source="module"><code>{demo.moduleSource}</code></pre>
+    <pre
+      class="code-source"
+      data-code-source="html"><code>{demo.htmlSource}</code></pre>
+  </div>
+
+  <div class="code-foot">
+    <span class="ok">● live</span>
+    <span>esm.sh</span>
+    <span>{demo.packages.join(" · ")}</span>
+  </div>
+</section>

@@ -1,0 +1,50 @@
+---
+import type { Demo } from "../registry";
+
+interface Props {
+  demo: Demo;
+}
+const { demo } = Astro.props;
+---
+
+<main class="center-stage" aria-label="Demo preview">
+  <div class="stage-head">
+    <h1 class="stage-title">{demo.title}</h1>
+    <p class="stage-desc">{demo.description}</p>
+    <div class="stage-tabs" role="tablist" aria-label="Demo views">
+      <button
+        class="stage-tab active"
+        role="tab"
+        aria-selected="true"
+        data-tab="preview">Preview</button
+      >
+      <button
+        class="stage-tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="props">Props</button
+      >
+      <button class="stage-tab" role="tab" aria-selected="false" data-tab="a11y"
+        >A11y</button
+      >
+      <button
+        class="stage-tab"
+        role="tab"
+        aria-selected="false"
+        data-tab="usage">Usage</button
+      >
+    </div>
+  </div>
+
+  {/* The live VectoJS canvas island mounts into this frame in Task 7. */}
+  <div class="stage-viewport" data-viewport data-demo-id={demo.id}>
+    <span class="viewport-badge">&lt;canvas&gt; · VectoJS island</span>
+  </div>
+
+  <div class="viewport-row" role="group" aria-label="Preview width">
+    <button class="vp active" data-vp="fluid">Responsive</button>
+    <button class="vp" data-vp="360">360</button>
+    <button class="vp" data-vp="768">768</button>
+    <button class="vp" data-vp="1280">1280</button>
+  </div>
+</main>
