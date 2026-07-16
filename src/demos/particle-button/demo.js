@@ -1,6 +1,21 @@
 import { Scene, ComputeParticleEntity } from "@vectojs/core";
 import { Button } from "@vectojs/ui";
 
+// Cap render resolution at 2x. WebGL point cost scales with backing-store
+// pixels (logical size x DPR^2); at 3x a full-screen 1200-particle field
+// overruns the 16ms budget on click, while 2x is already retina-crisp. The
+// engine reads window.devicePixelRatio live per resize and exposes no cap, so
+// clamp it here — safe because each demo owns its own iframe document.
+{
+  const real = window.devicePixelRatio || 1;
+  if (real > 2) {
+    Object.defineProperty(window, "devicePixelRatio", {
+      get: () => 2,
+      configurable: true,
+    });
+  }
+}
+
 const app = document.getElementById("app");
 const canvas = document.getElementById("canvas");
 
@@ -58,10 +73,12 @@ const button = new Button("\u2726 Launch", {
 });
 scene.add(button);
 
+let logicalW = 0;
+let logicalH = 0;
 function layout() {
   button.setPosition(
-    (canvas.width - button.width) / 2,
-    (canvas.height - button.height) / 2,
+    (logicalW - button.width) / 2,
+    (logicalH - button.height) / 2,
   );
 }
 
@@ -70,6 +87,8 @@ function fit() {
   const w = app.clientWidth;
   const h = app.clientHeight;
   if (w === 0 || h === 0) return;
+  logicalW = w;
+  logicalH = h;
   scene.resize(w, h);
   // Seed the field once, on the first real size — re-seeding every resize
   // would reset every particle mid-flight.
