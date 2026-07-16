@@ -109,10 +109,12 @@ const { demo } = Astro.props;
 
     function wire(frame: HTMLIFrameElement) {
       showStatus("Loading packages from esm.sh…", true, false);
-      // A demo is only "loaded" once its module executed and the engine
-      // appended a second (WebGL point-layer) canvas; a bare document with the
-      // authored <canvas> would false-positive. If neither the load handler nor
-      // that signal arrives in time, the esm.sh fetch is presumed unreachable.
+      // A demo is "booted" once its module ran and sized the canvas backing
+      // store (scene.resize / renderer.setSize). An authored <canvas> starts
+      // 0×0, so canvas.width > 0 is a demo-type-agnostic ready signal — it
+      // fires for Canvas2D, the WebGL point layer, and Three.js alike (a
+      // canvas-count check would miss single-canvas and offscreen-texture
+      // demos). If it never arrives, the esm.sh fetch is presumed unreachable.
       let settled = false;
       const settle = (fn: () => void) => {
         if (settled) return;
@@ -147,8 +149,8 @@ const { demo } = Astro.props;
           }),
         );
         const check = window.setInterval(() => {
-          const canvases = win.document.querySelectorAll("canvas");
-          if (canvases.length >= 2) {
+          const canvas = win.document.querySelector("canvas");
+          if (canvas && canvas.width > 0) {
             window.clearInterval(check);
             settle(() => {
               window.clearTimeout(timeout);
