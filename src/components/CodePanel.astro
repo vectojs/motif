@@ -27,10 +27,6 @@ const { demo } = Astro.props;
     <button class="code-run" type="button" data-run>▶ Run</button>
   </div>
 
-  {
-    /* The read-only CodeMirror editors mount in Task 8, seeded from these
-       raw source blocks (which are the exact bytes the iframe runs). */
-  }
   <div class="code-body">
     <pre
       class="code-source active"
@@ -44,5 +40,10 @@ const { demo } = Astro.props;
     <span class="ok">● live</span>
     <span>esm.sh</span>
     <span>{demo.packages.join(" · ")}</span>
+    <span class="code-license">MIT — copy freely</span>
   </div>
 </section>
+
+<script>
+  import "./CodeView";
+</script>
