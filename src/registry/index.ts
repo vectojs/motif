@@ -7,6 +7,15 @@ type DemoMeta = Omit<Demo, "moduleSource" | "htmlSource">;
 
 const ENTRIES: DemoMeta[] = [
   {
+    id: "controls-form",
+    title: "Settings Form",
+    description:
+      "A canvas-native form — Input, Slider, Toggle, and Button in a Stack — repainting on demand, never per frame.",
+    category: "controls",
+    tags: ["form", "onDemand"],
+    packages: ["@vectojs/core", "@vectojs/ui"],
+  },
+  {
     id: "particle-button",
     title: "Particle Button",
     description:
