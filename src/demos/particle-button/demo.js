@@ -4,12 +4,6 @@ import { Button } from "@vectojs/ui";
 const app = document.getElementById("app");
 const canvas = document.getElementById("canvas");
 
-function setSize() {
-  canvas.width = app.offsetWidth;
-  canvas.height = app.offsetHeight;
-}
-setSize();
-
 // navigator.gpu is hidden on Firefox by no-ff-webgpu.js (its WebGPU backend can
 // crash the GPU process), so this reliably distinguishes "GPU available" and
 // lets us scale the burst down on the CPU fallback to stay smooth.
@@ -21,10 +15,13 @@ const MAX_PARTICLES = canGPU ? 1200 : 350;
 // no-ff-webgpu.js (loaded first in index.html) forcing the CPU sim path; this
 // is an animating demo, not a static catalog, so it isn't exposed to the
 // idle-60fps WebGL->2D composite bug that hit the gallery.
+// disableWindowResize: a ResizeObserver on the host element drives sizing (the
+// VectoJS idiom) so the demo tracks its container, not the top window.
 const scene = new Scene(canvas, {
   renderMode: "always",
   pointBackend: "webgl",
   maxFPS: 60,
+  disableWindowResize: true,
 });
 
 const sparks = new ComputeParticleEntity({
@@ -68,16 +65,25 @@ function layout() {
   );
 }
 
-// Defer sizing + particle init to the next frame so the iframe's layout has
-// settled and (on WebGPU) the device is ready before the buffer is seeded —
-// mirrors the vectojs-website particles sandbox.
+let seeded = false;
 function fit() {
-  setSize();
-  scene.resize(canvas.width, canvas.height);
-  sparks.initRandomParticles(canvas.width, canvas.height);
+  const w = app.clientWidth;
+  const h = app.clientHeight;
+  if (w === 0 || h === 0) return;
+  scene.resize(w, h);
+  // Seed the field once, on the first real size — re-seeding every resize
+  // would reset every particle mid-flight.
+  if (!seeded) {
+    sparks.initRandomParticles(w, h);
+    seeded = true;
+  }
   layout();
 }
-window.addEventListener("resize", fit);
-requestAnimationFrame(fit);
+
+// Drive sizing from the host element. The first callback fires after layout has
+// settled (and the WebGPU device is ready), so it doubles as the deferred
+// initial seed — no separate rAF needed.
+const observer = new ResizeObserver(fit);
+observer.observe(app);
 
 scene.start();
