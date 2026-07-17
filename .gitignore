@@ -9,5 +9,6 @@ node_modules/
 .env.*
 .wrangler/
 tmp/
+.superpowers/
 /public/demos/
 /test/__screenshots__/
