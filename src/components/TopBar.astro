@@ -8,7 +8,18 @@ const version = "1.9.2";
     class="nav-toggle-btn"
     role="button"
     aria-label="Toggle navigation"
-    tabindex="0"><span aria-hidden="true">☰</span></label
+    tabindex="0"
+    ><svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      ><path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" /></svg
+    ></label
   >
   <a class="brand" href="/" aria-label="Motif home">
     <span class="brand-mark">M</span>
@@ -23,17 +34,40 @@ const version = "1.9.2";
     aria-label="Search components and effects"
     data-search-trigger
   >
-    <span aria-hidden="true">⌕</span> Search components &amp; effects…
+    <svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      ><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg
+    > Search components &amp; effects…
     <kbd>⌘K</kbd>
   </button>
   <div class="top-actions">
-    <span class="top-pill gpu" data-gpu-pill>● WebGPU</span>
+    <span class="top-pill gpu" data-gpu-pill
+      ><span class="dot"></span> WebGPU</span
+    >
     <span class="top-pill">core {version}</span>
     <a
       class="top-pill"
       href="https://github.com/vectojs"
       target="_blank"
-      rel="noopener noreferrer">GitHub ↗</a
+      rel="noopener noreferrer"
+      >GitHub <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        ><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg
+      ></a
     >
   </div>
 </header>
