@@ -1,21 +1,6 @@
 import { Scene, ComputeParticleEntity } from "@vectojs/core";
 import { Button } from "@vectojs/ui";
 
-// Cap render resolution at 2x. WebGL point cost scales with backing-store
-// pixels (logical size x DPR^2); at 3x a full-screen 1200-particle field
-// overruns the 16ms budget on click, while 2x is already retina-crisp. The
-// engine reads window.devicePixelRatio live per resize and exposes no cap, so
-// clamp it here — safe because each demo owns its own iframe document.
-{
-  const real = window.devicePixelRatio || 1;
-  if (real > 2) {
-    Object.defineProperty(window, "devicePixelRatio", {
-      get: () => 2,
-      configurable: true,
-    });
-  }
-}
-
 const app = document.getElementById("app");
 const canvas = document.getElementById("canvas");
 
@@ -32,11 +17,17 @@ const MAX_PARTICLES = canGPU ? 1200 : 350;
 // idle-60fps WebGL->2D composite bug that hit the gallery.
 // disableWindowResize: a ResizeObserver on the host element drives sizing (the
 // VectoJS idiom) so the demo tracks its container, not the top window.
+// maxDPR: 2 — WebGL point cost scales with backing-store pixels (logical
+// size x DPR^2); at 3x a full-screen 1200-particle field overruns the 16ms
+// budget on click, while 2x is already retina-crisp. First-class engine
+// option since @vectojs/core@1.10.0 — no more monkey-patching
+// window.devicePixelRatio (which also wasn't re-applied on resize).
 const scene = new Scene(canvas, {
   renderMode: "always",
   pointBackend: "webgl",
   maxFPS: 60,
   disableWindowResize: true,
+  maxDPR: 2,
 });
 
 const sparks = new ComputeParticleEntity({
