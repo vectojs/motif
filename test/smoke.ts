@@ -195,8 +195,8 @@ async function main(): Promise<void> {
       "teardown: exactly one demo iframe after switch",
     );
     check(
-      firstSrc === "/demos/particle-button/" &&
-        secondSrc === "/demos/virtual-list/",
+      firstSrc === "/demos/particle-button/index.html" &&
+        secondSrc === "/demos/virtual-list/index.html",
       "teardown: iframe src swapped to the new demo",
     );
     await page.close();
