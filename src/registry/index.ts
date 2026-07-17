@@ -25,6 +25,15 @@ const ENTRIES: DemoMeta[] = [
     packages: ["@vectojs/core", "@vectojs/ui"],
   },
   {
+    id: "context-menu",
+    title: "Context Menu",
+    description:
+      "A right-click file grid — separators, disabled rows, and a nested Sort-by submenu, with the browser's own menu suppressed.",
+    category: "controls",
+    tags: ["overlay", "a11y"],
+    packages: ["@vectojs/core", "@vectojs/ui"],
+  },
+  {
     id: "particle-button",
     title: "Particle Button",
     description:
