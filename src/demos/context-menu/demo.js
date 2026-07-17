@@ -57,12 +57,11 @@ backgroundHit.on("pointerdown", (e) => {
   const native = e.nativeEvent;
   if (native?.button !== 2) return;
   if (e.sceneX === undefined || e.sceneY === undefined) return;
-  // Rebuilt fresh each time (its "Paste" row's disabled state depends on the
-  // live clipboard var) — see the pre-mount note on buildFileMenu's menu
-  // above for why scene.add() has to run before the first showAtPoint().
-  const menu = buildBackgroundMenu();
-  scene.add(menu);
-  menu.showAtPoint(e.sceneX, e.sceneY);
+  // Rebuilt fresh each time so its "Paste" row's disabled state reflects the
+  // live clipboard var. Pass `backgroundHit` as the third arg so the fresh
+  // instance resolves the scene on its first showAtPoint call (see the
+  // per-file menu note above).
+  buildBackgroundMenu().showAtPoint(e.sceneX, e.sceneY, backgroundHit);
 });
 
 const grid = new Flow({ gap: 16, maxWidth: 3 * (CARD_W + 16) - 16 });
@@ -212,22 +211,20 @@ function renderCards() {
     card.add(label);
 
     const menu = buildFileMenu(file);
-    // showAtPoint() no-ops on an entity that has never been mounted (its
-    // .scene getter walks the parent chain, which is empty until something
-    // adds it) — pre-mount every menu once so the FIRST right-click works,
-    // not just the second. Overlay.showAtPoint reparents to scene.overlayRoot
-    // on every call regardless, so this add() only matters for that first hit.
-    scene.add(menu);
 
     // Right-click isn't a VectoEvent (only pointerdown/up are dispatched into
     // the tree — see the window-level contextmenu suppression above). Filter
     // pointerdown down to the native right button (2), same pattern as the
-    // ContextMenu class's own JSDoc example.
+    // ContextMenu class's own JSDoc example. Pass `card` as the third arg so
+    // `showAtPoint` can resolve the scene even on the very first call (before
+    // any manual `scene.add(menu)` — Overlay has no parent yet, so its
+    // `.scene` walks to null without a source; @vectojs/ui@1.10.0 added this
+    // arg exactly to fix that silent no-op).
     card.on("pointerdown", (e) => {
       const native = e.nativeEvent;
       if (native?.button !== 2) return;
       if (e.sceneX === undefined || e.sceneY === undefined) return;
-      menu.showAtPoint(e.sceneX, e.sceneY);
+      menu.showAtPoint(e.sceneX, e.sceneY, card);
     });
 
     grid.add(card);
