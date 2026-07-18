@@ -99,6 +99,21 @@ class GlassCard extends Entity {
       x: { stiffness: 170, damping: 17 },
       y: { stiffness: 170, damping: 17 },
     });
+
+    // The capsule on the glass is a REAL slider (0..1), not a static prop —
+    // a fixed-fill decoration painted a moving-looking knob without any
+    // drag logic behind it, reading as broken interactive UI. draggingSlider
+    // disambiguates "grabbed the knob" from "grabbed the card body" for the
+    // shared pointerdown/pointermove pair wired up below.
+    this.sliderValue = 0.62;
+    this.draggingSlider = false;
+  }
+
+  // Local-space geometry the slider track occupies — shared by hit-testing,
+  // dragging, and rendering so all three always agree.
+  sliderTrackRect() {
+    const trackW = this.width - 52;
+    return { x: 26, y: this.height - 58, w: trackW, h: 10 };
   }
 
   isPointInside(gx, gy) {
@@ -106,6 +121,27 @@ class GlassCard extends Entity {
     return (
       !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height
     );
+  }
+
+  // Hit-test the knob specifically (a padded circle around its center), used
+  // to decide whether a pointerdown starts a slider drag instead of a card
+  // drag.
+  isPointOnKnob(gx, gy) {
+    const p = this.worldToLocal(gx, gy);
+    if (!p) return false;
+    const t = this.sliderTrackRect();
+    const knobX = t.x + t.w * this.sliderValue;
+    const knobY = t.y + t.h / 2;
+    const dx = p.x - knobX;
+    const dy = p.y - knobY;
+    return dx * dx + dy * dy <= 14 * 14;
+  }
+
+  setSliderFromLocalX(localX) {
+    const t = this.sliderTrackRect();
+    const v = (localX - t.x) / t.w;
+    this.sliderValue = Math.max(0, Math.min(1, v));
+    this.scene?.markDirty();
   }
 
   // Rebuild the glass surface from the live wallpaper buffer. All the raw
@@ -250,18 +286,25 @@ class GlassCard extends Entity {
       '400 14px "Inter", sans-serif',
       "rgba(42, 39, 35, 0.62)",
     );
-    // A decorative capsule "slider" on the glass.
+    // A real capsule slider on the glass — track, fill, and knob all read
+    // from this.sliderValue (dragged via the pointer handlers below).
+    const track = this.sliderTrackRect();
     r.beginPath();
-    r.roundRect(26, h - 58, w - 52, 10, 5);
+    r.roundRect(track.x, track.y, track.w, track.h, 5);
     r.fill("rgba(255, 255, 255, 0.5)");
     const fillGrad = r.createLinearGradient(26, 0, w - 26, 0, [
       { stop: 0, color: "#d97757" },
       { stop: 1, color: "#f2b880" },
     ]);
     r.beginPath();
-    r.roundRect(26, h - 58, (w - 52) * 0.62, 10, 5);
+    r.roundRect(track.x, track.y, track.w * this.sliderValue, track.h, 5);
     r.fill(fillGrad);
-    r.fillCircle(26 + (w - 52) * 0.62, h - 53, 9, "#ffffff");
+    r.fillCircle(
+      track.x + track.w * this.sliderValue,
+      track.y + track.h / 2,
+      9,
+      "#ffffff",
+    );
     r.flush();
   }
 }
@@ -280,20 +323,39 @@ const card = new GlassCard(wallpaper, 340, 220);
 scene.add(card);
 
 // Drag: pointermove is tracked on the window so a fast drag that leaves the
-// card (springs lag!) keeps working until release.
+// card (springs lag!) keeps working until release. A pointerdown ON THE KNOB
+// starts a slider drag instead of a card drag — checked first since the knob
+// sits inside the card's own hit area.
 let grab = null;
 card.on("pointerdown", (e) => {
+  if (
+    e.sceneX !== undefined &&
+    e.sceneY !== undefined &&
+    card.isPointOnKnob(e.sceneX, e.sceneY)
+  ) {
+    card.draggingSlider = true;
+    return;
+  }
   grab = { dx: e.sceneX - card.x, dy: e.sceneY - card.y };
 });
 window.addEventListener("pointermove", (e) => {
-  if (!grab) return;
   const rect = canvas.getBoundingClientRect();
+  if (card.draggingSlider) {
+    const local = card.worldToLocal(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+    );
+    if (local) card.setSliderFromLocalX(local.x);
+    return;
+  }
+  if (!grab) return;
   // Assignments animate: the spring transition retargets in flight.
   card.x = e.clientX - rect.left - grab.dx;
   card.y = e.clientY - rect.top - grab.dy;
 });
 window.addEventListener("pointerup", () => {
   grab = null;
+  card.draggingSlider = false;
 });
 
 class Caption extends Entity {

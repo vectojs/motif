@@ -151,20 +151,25 @@ class JellyButton extends Entity {
     r.stroke(hexToRGBA(this.color, 0.9), 2);
 
     // Gloss: a soft highlight that squishes with the top rim points.
+    // IRenderer has no createRadialGradient, so approximate one with
+    // concentric, shrinking, fading circles instead of a single opaque
+    // disk — filling one circle with a vertical LINEAR gradient left a
+    // crisp, fully-opaque edge at the top of the disk (the gradient's alpha
+    // only fades going down, never radially), reading as "a small circle
+    // sitting on the jelly" rather than a soft sheen.
     const topY = Math.min(this.pts[10].y, this.pts[11].y);
-    const gloss = r.createLinearGradient(0, topY, 0, topY + d * 0.36, [
-      { stop: 0, color: "rgba(255, 255, 255, 0.85)" },
-      { stop: 1, color: "rgba(255, 255, 255, 0)" },
-    ]);
-    r.beginPath();
-    r.arc(
-      this.baseRadius,
-      topY + d * 0.22,
-      this.baseRadius * 0.52,
-      0,
-      Math.PI * 2,
-    );
-    r.fill(gloss);
+    const glossR = this.baseRadius * 0.56;
+    const glossCx = this.baseRadius;
+    const glossCy = topY + d * 0.2;
+    const RINGS = 14;
+    for (let i = RINGS; i >= 1; i--) {
+      const frac = i / RINGS;
+      const alpha = 0.5 * (1 - frac) * (1 - frac) * (1 - frac);
+      if (alpha <= 0.004) continue;
+      r.beginPath();
+      r.arc(glossCx, glossCy, glossR * frac, 0, Math.PI * 2);
+      r.fill(`rgba(255, 255, 255, ${alpha.toFixed(3)})`);
+    }
 
     const label = this.pokes > 0 ? `×${this.pokes}` : this.label;
     r.fillText(

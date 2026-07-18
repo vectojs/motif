@@ -85,15 +85,22 @@ function bakeCeramic(width, height, radius, glaze, seed) {
   ctx.beginPath();
   ctx.roundRect(0.5, 2, width - 1, height - 2.5, radius);
   ctx.stroke();
+
+  // Top lip highlight: an OPEN arc tracing just the top-rounded edge, not a
+  // closed rect — roundRect()+stroke() on a half-height box draws its full
+  // perimeter, including a hard straight line across the middle of the key
+  // where the box's bottom edge falls. Trace only the rounded corners + the
+  // straight span between them instead.
   ctx.lineWidth = 1.5;
   ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+  const r = radius - 1;
   ctx.beginPath();
-  ctx.roundRect(1.5, 1.25, width - 3, height * 0.5, [
-    radius - 1,
-    radius - 1,
-    2,
-    2,
-  ]);
+  ctx.moveTo(1.5, height * 0.42);
+  ctx.lineTo(1.5, r + 1.25);
+  ctx.arcTo(1.5, 1.25, 1.5 + r, 1.25, r);
+  ctx.lineTo(width - 1.5 - r, 1.25);
+  ctx.arcTo(width - 1.5, 1.25, width - 1.5, r + 1.25, r);
+  ctx.lineTo(width - 1.5, height * 0.42);
   ctx.stroke();
 
   return c;
@@ -193,26 +200,42 @@ class CeramicToggle extends Entity {
     this.checked = false;
     this.knobSize = height - 10;
     // Recessed track: an inverted glaze (dark top lip = carved into clay).
+    // Two variants ("off" raw clay, "on" warm coral wash) crossfade with the
+    // knob so the whole toggle — not just the small knob — reads as changed.
     const s = SPRITE_SCALE;
-    this.track = document.createElement("canvas");
-    this.track.width = width * s;
-    this.track.height = height * s;
-    const ctx = this.track.getContext("2d");
-    ctx.scale(s, s);
-    ctx.beginPath();
-    ctx.roundRect(0, 0, width, height, height / 2);
-    ctx.clip();
-    const g = ctx.createLinearGradient(0, 0, 0, height);
-    g.addColorStop(0, "#cfc4b2");
-    g.addColorStop(0.5, "#e6ddcc");
-    g.addColorStop(1, "#f2ecdf");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, width, height);
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "rgba(58, 44, 32, 0.3)";
-    ctx.beginPath();
-    ctx.roundRect(1, 1.75, width - 2, height, height / 2);
-    ctx.stroke();
+    this.trackOff = bakeTrack(width, height, s, [
+      "#cfc4b2",
+      "#e6ddcc",
+      "#f2ecdf",
+    ]);
+    this.trackOn = bakeTrack(width, height, s, [
+      "#e2a184",
+      "#eec19f",
+      "#f6dcc3",
+    ]);
+
+    function bakeTrack(w, h, scale, stops) {
+      const c = document.createElement("canvas");
+      c.width = w * scale;
+      c.height = h * scale;
+      const ctx = c.getContext("2d");
+      ctx.scale(scale, scale);
+      ctx.beginPath();
+      ctx.roundRect(0, 0, w, h, h / 2);
+      ctx.clip();
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, stops[0]);
+      g.addColorStop(0.5, stops[1]);
+      g.addColorStop(1, stops[2]);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "rgba(58, 44, 32, 0.3)";
+      ctx.beginPath();
+      ctx.roundRect(1, 1.75, w - 2, h, h / 2);
+      ctx.stroke();
+      return c;
+    }
 
     this.knobOff = bakeCeramic(
       this.knobSize,
@@ -268,10 +291,13 @@ class CeramicToggle extends Entity {
   }
 
   render(r) {
-    r.drawImage(this.track, 0, 0, this.width, this.height);
     const t = Math.max(0, Math.min(1, this.t));
     const x = 5 + t * (this.width - this.knobSize - 10);
     r.save();
+    r.setGlobalAlpha(1);
+    r.drawImage(this.trackOff, 0, 0, this.width, this.height);
+    r.setGlobalAlpha(t);
+    r.drawImage(this.trackOn, 0, 0, this.width, this.height);
     r.setGlobalAlpha(1);
     r.drawImage(this.knobOff, x, 5, this.knobSize, this.knobSize);
     r.setGlobalAlpha(t);
