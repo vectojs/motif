@@ -24,9 +24,9 @@
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.6",
     "@lezer/highlight": "^1.2.3",
-    "@vectojs/core": "1.11.0",
+    "@vectojs/core": "1.11.1",
     "@vectojs/three": "0.1.6",
-    "@vectojs/ui": "1.11.2",
+    "@vectojs/ui": "1.11.3",
     "astro": "^7.0.3",
     "codemirror": "^6.0.2",
     "three": "0.160.1"

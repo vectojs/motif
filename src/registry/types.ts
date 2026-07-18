@@ -1,11 +1,11 @@
-// Nav/display order. Materials and effects lead: Motif's focus is UI you
-// cannot get from the docs reference — tactile surfaces and special effects.
+// Nav/display order. Motif's focus is UI you cannot get from the docs
+// reference — tactile surfaces and special effects. Basic components
+// (forms, virtual lists, context menus, 3D panels, particle buttons) are
+// covered by the docs reference and the Gallery's Creation section instead —
+// see AGENTS.md's content policy.
 export const CATEGORIES = [
   { category: "materials", label: "Materials" },
   { category: "effects", label: "Effects" },
-  { category: "3d-xr", label: "3D · XR" },
-  { category: "controls", label: "Controls" },
-  { category: "layout", label: "Layout" },
 ] as const;
 
 export type DemoCategory = (typeof CATEGORIES)[number]["category"];

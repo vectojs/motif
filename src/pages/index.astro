@@ -11,9 +11,6 @@ const featured = DEMOS.find((d) => d.id === "liquid-glass") ?? DEMOS[0];
 const COVERS: Record<string, { a: string; b: string }> = {
   materials: { a: "#d97757", b: "#f2b880" },
   effects: { a: "#4d9d8f", b: "#8fd0c2" },
-  "3d-xr": { a: "#5b7fa6", b: "#9fc0dd" },
-  controls: { a: "#c9a35c", b: "#e9d8a6" },
-  layout: { a: "#a6788f", b: "#d0aabf" },
 };
 
 // Lucide-style 24px stroke paths, inlined so the covers stay dependency-free.
@@ -21,9 +18,6 @@ const COVERS: Record<string, { a: string; b: string }> = {
 const CATEGORY_ICONS: Record<string, string> = {
   materials: "M12 3c3 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 9 7.5 12 3z",
   effects: "M13 2 4 14h6l-1 8 9-12h-6l1-8z",
-  "3d-xr": "M12 2 3 7v10l9 5 9-5V7l-9-5zM3 7l9 5m0 0 9-5m-9 5v10",
-  controls: "M4 8h10M18 8h2M4 16h2M10 16h10M14 5v6M8 13v6",
-  layout: "M4 5h16M4 12h16M4 19h10",
 };
 const DEMO_ICONS: Record<string, string> = {
   "liquid-glass": "M12 3c3 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 9 7.5 12 3z",
@@ -32,10 +26,6 @@ const DEMO_ICONS: Record<string, string> = {
   jelly:
     "M12 4c4.5 0 8 3 8 7 0 2.5-1.5 4.5-3.5 5.5.5 1.5-.5 3.5-2 3.5-1 0-1.5-.5-2.5-.5s-1.5.5-2.5.5c-1.5 0-2.5-2-2-3.5C5.5 15.5 4 13.5 4 11c0-4 3.5-7 8-7z",
   "glitch-text": "M4 7V5h16v2M9 19h6M12 5v14M4 12h5M15 12h5",
-  "particle-button":
-    "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.8 2.8M15.2 15.2 18 18M18 6l-2.8 2.8M8.8 15.2 6 18",
-  "context-menu":
-    "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8 9h8M8 13h5",
 };
 ---
 

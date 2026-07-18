@@ -31,10 +31,6 @@ const DEMOS = [
   { category: "materials", id: "ceramic" },
   { category: "materials", id: "jelly" },
   { category: "effects", id: "glitch-text" },
-  { category: "effects", id: "particle-button" },
-  { category: "controls", id: "controls-form" },
-  { category: "layout", id: "virtual-list" },
-  { category: "3d-xr", id: "three-panel" },
 ];
 
 const MIME: Record<string, string> = {
@@ -188,10 +184,10 @@ async function main(): Promise<void> {
       viewport: { width: 1280, height: 800 },
       deviceScaleFactor: 1,
     });
-    await page.goto(`${BASE}/effects/particle-button/`, { waitUntil: "load" });
+    await page.goto(`${BASE}/materials/liquid-glass/`, { waitUntil: "load" });
     await page.waitForSelector("iframe[data-demo-frame]");
     const firstSrc = await page.getAttribute("iframe[data-demo-frame]", "src");
-    await page.goto(`${BASE}/layout/virtual-list/`, { waitUntil: "load" });
+    await page.goto(`${BASE}/effects/glitch-text/`, { waitUntil: "load" });
     await page.waitForSelector("iframe[data-demo-frame]");
     const frames = await page.$$("iframe[data-demo-frame]");
     const secondSrc = await page.getAttribute("iframe[data-demo-frame]", "src");
@@ -200,8 +196,8 @@ async function main(): Promise<void> {
       "teardown: exactly one demo iframe after switch",
     );
     check(
-      firstSrc === "/demos/particle-button/index.html" &&
-        secondSrc === "/demos/virtual-list/index.html",
+      firstSrc === "/demos/liquid-glass/index.html" &&
+        secondSrc === "/demos/glitch-text/index.html",
       "teardown: iframe src swapped to the new demo",
     );
     await page.close();
