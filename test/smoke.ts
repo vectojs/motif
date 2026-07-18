@@ -204,6 +204,120 @@ async function main(): Promise<void> {
       "teardown: iframe src swapped to the new demo",
     );
     await page.close();
+
+    // Resize-redistribution regression check: scene.resize() only changes
+    // the canvas/backing-store dimensions, not entity positions — demos
+    // whose own fit() only calls scene.resize() (rather than actively
+    // repositioning entities from the new width/height) shrink-then-grow
+    // into a clustered sub-region instead of spreading back across the
+    // full area. Constellation Lines and Mercury Blobs both hit this
+    // (2026-07-18); their fit() now rescales positions proportionally —
+    // this locks that in for every future viewport-toggle cycle.
+    console.log(`\n[resize] Responsive -> 360 -> Responsive redistribution`);
+    for (const [route, iframePath, preClick, buckets] of [
+      ["effects/constellation-lines", "/demos/constellation-lines/", null, 10],
+      // Mercury Blobs defaults to 6 entities — with only 6 finite-radius
+      // circles, a 10-bucket check is flaky by chance alone (random spawn
+      // positions can legitimately leave 1-2 of 10 buckets uncovered even
+      // with the resize fix in place, independent of the bug). Switch to
+      // the 12-blob tier first for a denser, less sample-flaky check, and
+      // use 5 buckets instead of 10 — still wide enough margin against the
+      // real bug's signature (0% coverage across 60% of buckets).
+      ["materials/mercury-blobs", "/demos/mercury-blobs/", "#btn-count-12", 5],
+    ] as const) {
+      const rp = await browser.newPage({
+        viewport: { width: 1300, height: 850 },
+        deviceScaleFactor: 1,
+      });
+      await rp.goto(`${BASE}/${route}/`, { waitUntil: "load" });
+      await rp.waitForTimeout(600);
+      if (preClick) {
+        const frameForPreclick = rp
+          .frames()
+          .find((f) => f.url().includes(iframePath));
+        await frameForPreclick!.locator(preClick).click();
+        await rp.waitForTimeout(400);
+      }
+      await rp.locator('[data-vp="360"]').click();
+      await rp.waitForTimeout(600);
+      await rp.locator('[data-vp="fluid"]').click();
+      await rp.waitForTimeout(600);
+      const frame = rp.frames().find((f) => f.url().includes(iframePath));
+      // A canvas-space histogram of visible (non-background) pixels across
+      // 10 equal-width buckets. This is a proxy for entity-position spread,
+      // verified against a direct per-entity x-coordinate readout (a
+      // temporary window.__points/__blobs debug hook) while diagnosing the
+      // original bug: the clustering bug left roughly 60% of buckets
+      // COMPLETELY empty (all content confined to the sub-region the
+      // entities occupied at the narrow width), not merely pixel-poor — so
+      // requiring every bucket to hold a MEANINGFUL share (not just
+      // count>0) is what actually catches it.
+      //
+      // Constellation Lines enables `pointBackend: 'webgl'`, which makes
+      // Scene create a SEPARATE overlay `<canvas>` appended after the
+      // original one and does all point drawing there — the original
+      // `#canvas` element stays visually blank. `document.querySelector
+      // ("canvas")` returns the FIRST canvas in DOM order (the blank one),
+      // so reading pixels from it is a false negative regardless of the
+      // real bug state; every canvas must be checked and the one with
+      // actual non-background content used.
+      const spread = await frame!.evaluate((BUCKETS: number) => {
+        const canvases = Array.from(
+          document.querySelectorAll("canvas"),
+        ) as HTMLCanvasElement[];
+        const bg = [0xf7, 0xf4, 0xee]; // --void
+        let best: number[] | null = null;
+        let bestTotal = -1;
+        for (const canvas of canvases) {
+          const ctx = canvas.getContext("2d");
+          if (!ctx) continue; // a WebGL-context canvas: getContext('2d') is null
+          const { width, height } = canvas;
+          if (width === 0 || height === 0) continue;
+          const { data } = ctx.getImageData(0, 0, width, height);
+          const buckets = new Array(BUCKETS).fill(0);
+          for (let y = 0; y < height; y += 3) {
+            for (let x = 0; x < width; x += 3) {
+              const i = (y * width + x) * 4;
+              // A canvas that's blank because pointBackend:'webgl' routes
+              // all drawing to a SEPARATE overlay canvas reads back as
+              // fully transparent (alpha=0) here, not the page's --void
+              // color — treating only exact-bg-color pixels as
+              // "background" mis-flagged every pixel of that blank canvas
+              // as "content", producing a uniform-looking false positive
+              // that hid the real clustering bug during triage.
+              const alpha = data[i + 3];
+              const isBg =
+                alpha === 0 ||
+                (Math.abs(data[i] - bg[0]) < 6 &&
+                  Math.abs(data[i + 1] - bg[1]) < 6 &&
+                  Math.abs(data[i + 2] - bg[2]) < 6);
+              if (!isBg)
+                buckets[
+                  Math.min(BUCKETS - 1, Math.floor((x / width) * BUCKETS))
+                ]++;
+            }
+          }
+          const total = buckets.reduce((s, n) => s + n, 0);
+          if (total > bestTotal) {
+            bestTotal = total;
+            best = buckets;
+          }
+        }
+        return best;
+      }, buckets);
+      const total = spread ? spread.reduce((s, n) => s + n, 0) : 0;
+      // Every bucket must hold at least 2% of total content pixels — the
+      // measured buggy distribution put 0% in over half the buckets, so
+      // this threshold has wide margin against both the real bug and
+      // ordinary rendering noise (anti-aliasing, glow/blur radii, line
+      // endpoints) or a sparse-entity-count sampling fluke.
+      const minShare = total * 0.02;
+      check(
+        !!spread && total > 0 && spread.every((n) => n >= minShare),
+        `${route}: content spread across all ${buckets} buckets after resize cycle, each >=2% of ${total} total (${JSON.stringify(spread)})`,
+      );
+      await rp.close();
+    }
   } finally {
     await browser.close();
     server.stop(true);

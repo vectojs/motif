@@ -192,11 +192,33 @@ function spawnPoints(count) {
 
 spawnPoints(1500);
 
+// Tracks the canvas size fit() last saw, so a resize can rescale existing
+// point positions proportionally instead of leaving them exactly where they
+// were. scene.resize() only changes the canvas/backing-store dimensions —
+// it does not touch entity positions — so shrinking the canvas pushes
+// points outside the new bounds (Point.update()'s wrap-around then pulls
+// them back in, but only one canvas-width at a time per frame) and growing
+// back leaves every point still confined to whatever sub-region it had
+// wrapped into at the smaller size, clustering them in one corner instead
+// of spreading across the newly available area.
+let lastW = 0;
+let lastH = 0;
+
 function fit() {
   const w = app.clientWidth;
   const h = app.clientHeight;
   if (w === 0 || h === 0) return;
   scene.resize(w, h);
+  if (lastW > 0 && lastH > 0 && (lastW !== w || lastH !== h)) {
+    const sx = w / lastW;
+    const sy = h / lastH;
+    for (const p of points) {
+      p.x *= sx;
+      p.y *= sy;
+    }
+  }
+  lastW = w;
+  lastH = h;
 }
 const observer = new ResizeObserver(fit);
 observer.observe(app);

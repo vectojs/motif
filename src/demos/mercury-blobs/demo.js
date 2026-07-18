@@ -209,12 +209,34 @@ function spawnBlobs(count) {
 
 spawnBlobs(6);
 
+// Tracks the canvas size fit() last saw, so a resize can rescale existing
+// blob positions proportionally instead of leaving them exactly where they
+// were. scene.resize() only changes the canvas/backing-store dimensions —
+// it does not touch entity positions — so shrinking the canvas can push a
+// blob outside the new bounds (Blob.update()'s edge-bounce logic then
+// re-clamps it, but only to the nearest edge, not to a proportional
+// position) and growing back leaves every blob still confined to whatever
+// sub-region it had bounced into at the smaller size, clustering them
+// instead of spreading across the newly available area.
+let lastW = 0;
+let lastH = 0;
+
 function fit() {
   const w = app.clientWidth;
   const h = app.clientHeight;
   if (w === 0 || h === 0) return;
   scene.resize(w, h);
   goo?.resize(w, h);
+  if (lastW > 0 && lastH > 0 && (lastW !== w || lastH !== h)) {
+    const sx = w / lastW;
+    const sy = h / lastH;
+    for (const b of blobs) {
+      b.x *= sx;
+      b.y *= sy;
+    }
+  }
+  lastW = w;
+  lastH = h;
 }
 const observer = new ResizeObserver(fit);
 observer.observe(app);
