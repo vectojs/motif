@@ -8,6 +8,37 @@ import { Scene, Entity, SpatialHashGrid } from "@vectojs/core";
 // Scene routes to its WebGL point layer (pointBackend: 'webgl') so the
 // circle draw itself is never the bottleneck being measured.
 
+// Measures the Scene's REAL render cadence, not the display's vsync rate.
+// An independent requestAnimationFrame loop fires every vsync tick
+// regardless of whether Scene actually rendered that tick — on a 240Hz
+// display it samples ~240 ticks/sec even while Scene.loop()'s own maxFPS
+// cap renders only every 4th one, so a naive HUD would read "240fps" while
+// the visible motion was genuinely capped at 60. Entity.update(dt) is only
+// ever called from inside Scene's renderNode() walk, which is skipped
+// entirely on a throttled/skipped tick — so a probe entity's own update()
+// calls are a direct measurement of frames Scene actually rendered.
+class FrameProbe extends Entity {
+  frameTimes = [];
+  isPointInside() {
+    return false;
+  }
+  render() {}
+  update(dt) {
+    this.frameTimes.push(dt);
+    // A window this small (~330ms at 60fps) still smooths ordinary
+    // frame-to-frame noise, but doesn't let the average lag behind a real
+    // fps transition — a larger window held onto stale throttled-fps
+    // samples for roughly a full second after Scene un-throttled following
+    // interaction, making the HUD under-report for far longer than the
+    // actual slowdown lasted.
+    if (this.frameTimes.length > 20) this.frameTimes.shift();
+  }
+  avgFrameTime() {
+    if (this.frameTimes.length === 0) return 0;
+    return this.frameTimes.reduce((s, v) => s + v, 0) / this.frameTimes.length;
+  }
+}
+
 const app = document.getElementById("app");
 const canvas = document.getElementById("canvas");
 const hud = document.getElementById("hud");
@@ -42,6 +73,18 @@ class Point extends Entity {
     this.vx = vx;
     this.vy = vy;
     this.radius = 2.2;
+  }
+
+  // Points drift perpetually and never settle — without this override,
+  // Scene has no way to know motion is in flight (the default
+  // hasPendingAnimations() returns false), so its own idle-detection
+  // considers the scene "idle" every frame and the renderMode:'always'
+  // auto-throttle drops the WHOLE demo to ~2fps despite 1500 points
+  // visibly moving. Measured before this fix: the HUD's own frame-time
+  // readout showed ~400ms/frame (2fps) at rest — this was the actual
+  // severe jank being reported, not a DPR or sandbox issue.
+  hasPendingAnimations() {
+    return true;
   }
 
   update(dt) {
@@ -163,9 +206,22 @@ const scene = new Scene(canvas, {
   renderMode: "always", // points drift continuously
   maxFPS: 60,
   disableWindowResize: true,
-  maxDPR: 2,
+  // Capped at 1 CSS pixel per canvas pixel, not the display's native DPR.
+  // Measured directly (HUD's own frame-time readout at settled state, DPR1
+  // vs DPR2, same point count): at maxDPR:2, a common HiDPI laptop screen
+  // pushed frame time from 16.7ms to 140ms (7fps) — the neighbor-link pass
+  // draws thousands of thin, semi-transparent stroke segments every frame,
+  // and that cost scales with backing-store pixel count same as any other
+  // canvas draw call. maxDPR:1 recovered to ~19ms (52fps). The lines are
+  // already thin/translucent, so the extra sharpness at native DPR bought
+  // little visible improvement (confirmed with a side-by-side screenshot
+  // at deviceScaleFactor:2) — not worth a >7x frame-time cost.
+  maxDPR: 1,
   pointBackend: "webgl", // routes Point.getBatchCircle() to the GPU layer
 });
+
+const frameProbe = new FrameProbe();
+scene.add(frameProbe);
 
 let points = [];
 let lines = null;
@@ -252,27 +308,9 @@ algoBtn.addEventListener("click", () => {
   algoBtn.setAttribute("aria-pressed", String(!lines.useGrid));
 });
 
-// --- HUD: an independent rAF sampler measuring real wall-clock frame
-// cadence (not Scene's internal loop, which exposes no per-frame hook —
-// see AGENTS.md / forge/findings.md). Both loops share the main thread, so
-// a slow Scene frame delays this loop's callback too; the rolling average
-// is a faithful proxy for what the browser is actually delivering. ---
-const frameTimes = [];
-let lastT = performance.now();
-function sampleFrame(now) {
-  frameTimes.push(now - lastT);
-  lastT = now;
-  if (frameTimes.length > 60) frameTimes.shift();
-  requestAnimationFrame(sampleFrame);
-}
-requestAnimationFrame((t) => {
-  lastT = t;
-  requestAnimationFrame(sampleFrame);
-});
-
 function updateHud() {
-  if (frameTimes.length > 0) {
-    const avg = frameTimes.reduce((s, v) => s + v, 0) / frameTimes.length;
+  const avg = frameProbe.avgFrameTime();
+  if (avg > 0) {
     const fps = 1000 / avg;
     const queryMs = lines ? lines.lastQueryMs.toFixed(2) : "—";
     const lineCount = lines ? lines.lastLineCount : 0;

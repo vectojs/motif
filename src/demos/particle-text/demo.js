@@ -1,5 +1,37 @@
 import { Scene, Entity, ComputeParticleEntity } from "@vectojs/core";
 
+// Measures the Scene's REAL render cadence, not the display's vsync rate.
+// An independent requestAnimationFrame loop (the original approach here)
+// fires every vsync tick regardless of whether Scene actually rendered that
+// tick — on a 240Hz display it samples ~240 ticks/sec even while
+// Scene.loop()'s own maxFPS cap renders only every 4th one, so the HUD read
+// "240fps" while the visible motion was genuinely capped at 60. Entity.
+// update(dt) is only ever called from inside Scene's renderNode() walk,
+// which is skipped entirely on a throttled/skipped tick — so a probe
+// entity's own update() calls are a direct measurement of frames Scene
+// actually rendered.
+class FrameProbe extends Entity {
+  frameTimes = [];
+  isPointInside() {
+    return false;
+  }
+  render() {}
+  update(dt) {
+    this.frameTimes.push(dt);
+    // A window this small (~330ms at 60fps) still smooths ordinary
+    // frame-to-frame noise, but doesn't let the average lag behind a real
+    // fps transition — a 60-sample window (the original choice) held onto
+    // ~60 stale throttled-2fps samples for roughly a full second after
+    // Scene un-throttled following a click, making the HUD read "3fps"
+    // for ~800ms after motion had already resumed at 60fps.
+    if (this.frameTimes.length > 20) this.frameTimes.shift();
+  }
+  avgFrameTime() {
+    if (this.frameTimes.length === 0) return 0;
+    return this.frameTimes.reduce((s, v) => s + v, 0) / this.frameTimes.length;
+  }
+}
+
 // Particle text: a word is rendered once into an offscreen canvas, sampled
 // into a point cloud, and fed to ComputeParticleEntity as each particle's
 // "origin" — the spring-to-origin physics built into the entity is what
@@ -120,6 +152,9 @@ scene.add(particles);
 const word = new Word();
 scene.add(word);
 
+const frameProbe = new FrameProbe();
+scene.add(frameProbe);
+
 let wordIndex = 0;
 let fontPx = 120;
 
@@ -187,20 +222,6 @@ canvas.addEventListener("pointerdown", (e) => {
 
 scene.start();
 
-// --- HUD: independent rAF sampler (Scene exposes no per-frame hook) ---
-const frameTimes = [];
-let lastT = performance.now();
-function sampleFrame(now) {
-  frameTimes.push(now - lastT);
-  lastT = now;
-  if (frameTimes.length > 60) frameTimes.shift();
-  requestAnimationFrame(sampleFrame);
-}
-requestAnimationFrame((t) => {
-  lastT = t;
-  requestAnimationFrame(sampleFrame);
-});
-
 // navigator.gpu being present only means the API exists, not that a real
 // adapter was found — Scene tries WebGPU lazily/async on the first
 // ComputeParticleEntity frame and can still fall back to CPU (e.g.
@@ -210,8 +231,8 @@ requestAnimationFrame((t) => {
 const gpuRequested = !!navigator.gpu;
 
 function updateHud() {
-  if (frameTimes.length > 0) {
-    const avg = frameTimes.reduce((s, v) => s + v, 0) / frameTimes.length;
+  const avg = frameProbe.avgFrameTime();
+  if (avg > 0) {
     const fps = 1000 / avg;
     hud.textContent =
       `${MAX_PARTICLES} particles · webgpu ${gpuRequested ? "requested" : "unavailable"}\n` +
