@@ -30,6 +30,7 @@ const DEMOS = [
   { category: "materials", id: "liquid-glass" },
   { category: "materials", id: "ceramic" },
   { category: "materials", id: "jelly" },
+  { category: "materials", id: "mercury-blobs" },
   { category: "effects", id: "glitch-text" },
   { category: "effects", id: "constellation-lines" },
   { category: "effects", id: "particle-text" },
