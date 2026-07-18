@@ -327,6 +327,11 @@ function runTransform() {
     const cx = w / 2;
     const cy = h / 2;
     for (const b of buckets) b.triggerExplosion(cx, cy, 46000);
+    scene.markDirty(); // triggerExplosion queues the burst but never marks
+    // the scene dirty — on an idled scene (2fps throttle) the next
+    // render pass can be delayed up to the throttle interval (~500ms).
+    // Without this, the explosion visibly hangs for half a second before
+    // any particles start moving.
     window.setTimeout(() => {
       layoutWord(targetText, false);
       const durationMs = Number(panel.duration.value) * 100;

@@ -202,7 +202,7 @@ class GooLayer extends Entity {
     ctx.fillStyle = SILVER;
     for (const b of this.blobs) {
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.radius * 0.82, 0, Math.PI * 2);
+      ctx.arc(b.x + b.radius, b.y + b.radius, b.radius * 0.82, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.filter = "none";
@@ -234,12 +234,14 @@ class GooLayer extends Entity {
     contrastCtx.setTransform(s, 0, 0, s, 0, 0);
     contrastCtx.globalCompositeOperation = "source-atop";
     for (const b of this.blobs) {
+      const cx = b.x + b.radius;
+      const cy = b.y + b.radius;
       const g = contrastCtx.createRadialGradient(
-        b.x - b.radius * 0.3,
-        b.y - b.radius * 0.35,
+        cx - b.radius * 0.3,
+        cy - b.radius * 0.35,
         0,
-        b.x,
-        b.y,
+        cx,
+        cy,
         b.radius * 1.1,
       );
       g.addColorStop(0, "rgba(255, 255, 255, 0.9)");
@@ -248,7 +250,13 @@ class GooLayer extends Entity {
       g.addColorStop(1, `${SILVER_DARK}55`);
       contrastCtx.fillStyle = g;
       contrastCtx.beginPath();
-      contrastCtx.arc(b.x, b.y, b.radius * 1.1, 0, Math.PI * 2);
+      contrastCtx.arc(
+        b.x + b.radius,
+        b.y + b.radius,
+        b.radius * 1.1,
+        0,
+        Math.PI * 2,
+      );
       contrastCtx.fill();
     }
     contrastCtx.globalCompositeOperation = "source-over";
