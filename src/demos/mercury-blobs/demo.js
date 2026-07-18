@@ -81,6 +81,7 @@ class Blob extends Entity {
     this.vx = (Math.random() - 0.5) * 24;
     this.vy = (Math.random() - 0.5) * 24;
     this.interactive = true;
+    this._a11yRoundPatched = false;
   }
 
   isPointInside(gx, gy) {
@@ -101,6 +102,25 @@ class Blob extends Entity {
   }
 
   update(dt) {
+    // The a11y shadow element Scene projects for hit-testing/hover is a
+    // RECTANGLE sized from width/height (entity.x,y to entity.x+width,
+    // y+height) — the full bounding square of this circle, not the circle
+    // itself. isPointInside()'s circle math only gates VectoJS's own
+    // internal hit-test path; it does nothing for the real DOM element a
+    // browser's native pointer events actually hit-test against. Without
+    // this fix, the ~21.5% of the square OUTSIDE the inscribed circle (the
+    // four corners) was clickable/hoverable even though nothing is drawn
+    // there. CSS border-radius on the shadow element itself changes what
+    // area the BROWSER considers "on" the element — a one-time patch right
+    // after Scene creates it (idempotent via the dataset flag) rather than
+    // every frame, since the box never changes shape after construction.
+    if (!this._a11yRoundPatched && this.scene) {
+      const el = this.scene.getA11yElement(this.id);
+      if (el) {
+        el.style.borderRadius = "50%";
+        this._a11yRoundPatched = true;
+      }
+    }
     if (this.dragging) return;
     const step = Math.min(dt, 32) / 1000;
     const w = this.scene?.width ?? 0;

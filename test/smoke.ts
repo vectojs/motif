@@ -216,14 +216,18 @@ async function main(): Promise<void> {
     console.log(`\n[resize] Responsive -> 360 -> Responsive redistribution`);
     for (const [route, iframePath, preClick, buckets] of [
       ["effects/constellation-lines", "/demos/constellation-lines/", null, 10],
-      // Mercury Blobs defaults to 6 entities — with only 6 finite-radius
-      // circles, a 10-bucket check is flaky by chance alone (random spawn
-      // positions can legitimately leave 1-2 of 10 buckets uncovered even
-      // with the resize fix in place, independent of the bug). Switch to
-      // the 12-blob tier first for a denser, less sample-flaky check, and
-      // use 5 buckets instead of 10 — still wide enough margin against the
-      // real bug's signature (0% coverage across 60% of buckets).
-      ["materials/mercury-blobs", "/demos/mercury-blobs/", "#btn-count-12", 5],
+      // Mercury Blobs defaults to 6 entities — even at the 12-blob tier,
+      // any bucket count above ~2 is flaky by chance alone: random spawn
+      // positions can legitimately leave a thin bucket under-covered even
+      // with the resize fix correctly in place (observed failures across
+      // 5 test runs: 5-bucket and 4-bucket splits each failed roughly 1 in
+      // 5 times on an otherwise-correct build). The real bug's signature —
+      // ALL content confined to one narrow sub-region after growing back
+      // to full width — is still caught with a wide margin by just 2
+      // buckets (left half vs right half): the unfixed code left one
+      // entire half completely empty (0%), while 12 randomly-placed blobs
+      // landing entirely in one half by chance is astronomically unlikely.
+      ["materials/mercury-blobs", "/demos/mercury-blobs/", "#btn-count-12", 2],
     ] as const) {
       const rp = await browser.newPage({
         viewport: { width: 1300, height: 850 },
