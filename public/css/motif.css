@@ -253,28 +253,6 @@ a {
   max-width: 560px;
   line-height: 1.5;
 }
-.stage-tabs {
-  display: flex;
-  gap: 4px;
-  margin-top: 16px;
-  border-bottom: 1px solid var(--rule);
-}
-.stage-tab {
-  font-size: 12.5px;
-  padding: 8px 13px;
-  color: var(--text-faint);
-  border-bottom: 2px solid transparent;
-  background: none;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  font-family: inherit;
-  cursor: pointer;
-}
-.stage-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--brand-a);
-}
 .viewport {
   flex: 1;
   margin: 22px 26px;
@@ -627,5 +605,229 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .shell > .left-nav {
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- landing */
+/* The index page: hero + card catalog. Unlike the app shell (fixed grid,
+   no page scroll), the landing scrolls as a document inside its own column. */
+.landing {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.landing .topbar {
+  flex: none;
+}
+.land-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 28px 40px;
+}
+
+.hero {
+  max-width: 880px;
+  margin: 64px auto 20px;
+  text-align: center;
+}
+.hero-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.hero-title {
+  margin-top: 14px;
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  background: linear-gradient(120deg, var(--text) 55%, var(--brand-a));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.hero-sub {
+  margin: 18px auto 0;
+  max-width: 620px;
+  color: var(--text-dim);
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+.hero-cta {
+  margin-top: 26px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+  box-shadow: 0 6px 18px rgba(217, 119, 87, 0.28);
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+.btn-ghost {
+  color: var(--text);
+  border-color: var(--rule-bright);
+  background: var(--panel);
+}
+.btn-ghost:hover {
+  border-color: var(--brand-a);
+}
+
+.land-section {
+  max-width: 1080px;
+  margin: 44px auto 0;
+}
+.land-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.land-label .count {
+  color: var(--text-faint);
+}
+.card-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.demo-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--panel);
+  overflow: hidden;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.demo-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--rule-bright);
+  box-shadow: 0 14px 34px rgba(61, 53, 41, 0.12);
+}
+.card-cover {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.9);
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(255, 255, 255, 0.38),
+      transparent 46%
+    ),
+    linear-gradient(135deg, var(--cov-a), var(--cov-b));
+}
+.cover-icon {
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
+}
+.cover-live {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+.card-desc {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-meta {
+  margin-top: auto;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.card-meta .chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--rule);
+  color: var(--text-faint);
+}
+
+.land-foot {
+  max-width: 1080px;
+  margin: 56px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.land-foot a:hover {
+  color: var(--brand-a);
+}
+.foot-dot {
+  color: var(--rule-bright);
+}
+
+@media (max-width: 640px) {
+  .hero {
+    margin-top: 36px;
+  }
+  .hero-cta {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Topbar: keep the brand on one line; the search field yields instead. */
+  .brand-sub {
+    display: none;
+  }
+  .top-search {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }

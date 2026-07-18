@@ -11,29 +11,6 @@ const { demo } = Astro.props;
   <div class="stage-head">
     <h1 class="stage-title">{demo.title}</h1>
     <p class="stage-desc">{demo.description}</p>
-    <div class="stage-tabs" role="tablist" aria-label="Demo views">
-      <button
-        class="stage-tab active"
-        role="tab"
-        aria-selected="true"
-        data-tab="preview">Preview</button
-      >
-      <button
-        class="stage-tab"
-        role="tab"
-        aria-selected="false"
-        data-tab="props">Props</button
-      >
-      <button class="stage-tab" role="tab" aria-selected="false" data-tab="a11y"
-        >A11y</button
-      >
-      <button
-        class="stage-tab"
-        role="tab"
-        aria-selected="false"
-        data-tab="usage">Usage</button
-      >
-    </div>
   </div>
 
   {

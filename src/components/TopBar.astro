@@ -1,5 +1,8 @@
 ---
-const version = "1.9.2";
+import pkg from "../../package.json";
+
+// Read from the manifest so the badge can never drift from the pinned engine.
+const version = pkg.dependencies["@vectojs/core"];
 ---
 
 <header class="topbar">

@@ -1,13 +1,137 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Shell from "../components/Shell.astro";
-import { DEMOS } from "../registry";
+import TopBar from "../components/TopBar.astro";
+import { DEMOS, CATEGORIES } from "../registry";
 
-// The landing page features the first registered demo; per-demo routes
-// (/{category}/{id}) are generated in Task 7.
-const demo = DEMOS[0];
+// Landing: a showcase catalog, not a redirect into the first demo. Cards are
+// grouped in CATEGORIES order (materials/effects first — the point of Motif).
+const featured = DEMOS.find((d) => d.id === "liquid-glass") ?? DEMOS[0];
+
+// Cover art per category: gradient + accent used by the card headers.
+const COVERS: Record<string, { a: string; b: string }> = {
+  materials: { a: "#d97757", b: "#f2b880" },
+  effects: { a: "#4d9d8f", b: "#8fd0c2" },
+  "3d-xr": { a: "#5b7fa6", b: "#9fc0dd" },
+  controls: { a: "#c9a35c", b: "#e9d8a6" },
+  layout: { a: "#a6788f", b: "#d0aabf" },
+};
+
+// Lucide-style 24px stroke paths, inlined so the covers stay dependency-free.
+// Keyed by demo id with a per-category fallback for demos added later.
+const CATEGORY_ICONS: Record<string, string> = {
+  materials: "M12 3c3 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 9 7.5 12 3z",
+  effects: "M13 2 4 14h6l-1 8 9-12h-6l1-8z",
+  "3d-xr": "M12 2 3 7v10l9 5 9-5V7l-9-5zM3 7l9 5m0 0 9-5m-9 5v10",
+  controls: "M4 8h10M18 8h2M4 16h2M10 16h10M14 5v6M8 13v6",
+  layout: "M4 5h16M4 12h16M4 19h10",
+};
+const DEMO_ICONS: Record<string, string> = {
+  "liquid-glass": "M12 3c3 4.5 6 7.5 6 10.5a6 6 0 0 1-12 0C6 10.5 9 7.5 12 3z",
+  ceramic:
+    "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 15h6",
+  jelly:
+    "M12 4c4.5 0 8 3 8 7 0 2.5-1.5 4.5-3.5 5.5.5 1.5-.5 3.5-2 3.5-1 0-1.5-.5-2.5-.5s-1.5.5-2.5.5c-1.5 0-2.5-2-2-3.5C5.5 15.5 4 13.5 4 11c0-4 3.5-7 8-7z",
+  "glitch-text": "M4 7V5h16v2M9 19h6M12 5v14M4 12h5M15 12h5",
+  "particle-button":
+    "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.8 2.8M15.2 15.2 18 18M18 6l-2.8 2.8M8.8 15.2 6 18",
+  "context-menu":
+    "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8 9h8M8 13h5",
+};
 ---
 
-<Layout title={`Motif — ${demo.title}`}>
-  <Shell demo={demo} />
+<Layout title="Motif — VectoJS materials, animations & effects">
+  <div class="landing">
+    <TopBar />
+    <main class="land-main">
+      <section class="hero">
+        <p class="hero-kicker">VectoJS · canvas-native</p>
+        <h1 class="hero-title">
+          Materials, motion &amp; effects<br />you won't find in the docs
+        </h1>
+        <p class="hero-sub">
+          Liquid glass, fired ceramic, wobbling jelly, torn print — every demo
+          runs live in a real VectoJS canvas, and the code on screen is exactly
+          the code that runs. Copy it into your project.
+        </p>
+        <div class="hero-cta">
+          <a
+            class="btn btn-primary"
+            href={`/${featured.category}/${featured.id}`}
+          >
+            Explore {featured.title}
+          </a>
+          <a
+            class="btn btn-ghost"
+            href="https://github.com/vectojs/motif"
+            target="_blank"
+            rel="noopener noreferrer">Contribute a demo</a
+          >
+        </div>
+      </section>
+
+      {
+        CATEGORIES.map(({ category, label }) => {
+          const items = DEMOS.filter((d) => d.category === category);
+          if (items.length === 0) return null;
+          const cover = COVERS[category];
+          return (
+            <section class="land-section">
+              <h2 class="land-label">
+                {label} <span class="count">{items.length}</span>
+              </h2>
+              <div class="card-grid">
+                {items.map((d) => (
+                  <a class="demo-card" href={`/${d.category}/${d.id}`}>
+                    <div
+                      class="card-cover"
+                      style={`--cov-a: ${cover.a}; --cov-b: ${cover.b}`}
+                    >
+                      <svg
+                        class="cover-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d={DEMO_ICONS[d.id] ?? CATEGORY_ICONS[category]}
+                        />
+                      </svg>
+                      <span class="cover-live">● live</span>
+                    </div>
+                    <div class="card-body">
+                      <h3 class="card-title">{d.title}</h3>
+                      <p class="card-desc">{d.description}</p>
+                      <div class="card-meta">
+                        {d.tags.map((t) => (
+                          <span class="chip">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </section>
+          );
+        })
+      }
+
+      <footer class="land-foot">
+        <span>MIT — copy freely</span>
+        <span class="foot-dot">·</span>
+        <a href="https://vectojs.org" target="_blank" rel="noopener noreferrer"
+          >vectojs.org</a
+        >
+        <span class="foot-dot">·</span>
+        <a
+          href="https://gallery.vectojs.org"
+          target="_blank"
+          rel="noopener noreferrer">community gallery</a
+        >
+      </footer>
+    </main>
+  </div>
 </Layout>

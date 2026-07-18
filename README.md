@@ -27,6 +27,11 @@ bun run test           # bun unit tests
 
 ## Adding a demo
 
+Motif's focus is UI you can't get from the docs reference: tactile materials
+(liquid glass, ceramic, jelly), signature animation, and special effects. If a
+plain component usage is already covered by `vectojs.org/reference` or the
+community gallery, it does not belong here.
+
 Each demo is a folder under `src/demos/<id>/`:
 
 - `demo.js` — a **native JavaScript** ES module (no transpile: the code shown in
@@ -36,7 +41,7 @@ Each demo is a folder under `src/demos/<id>/`:
   importmap with pinned esm.sh URLs, a `<canvas>`, then
   `<script type="module" src="./demo.js">`.
 
-Then add a `Demo` entry to `DEMOS` in `src/registry.ts`. Default to the 2D/CPU
+Then add a `Demo` entry to `DEMOS` in `src/registry/index.ts`. Default to the 2D/CPU
 point backend; only opt into `pointBackend: 'webgl'` when a demo needs it.
 
 See `AGENTS.md` for the full architecture and constraints.

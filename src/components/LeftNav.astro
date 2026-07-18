@@ -1,17 +1,12 @@
 ---
-import { DEMOS, type DemoCategory } from "../registry";
+import { DEMOS, CATEGORIES } from "../registry";
 
 interface Props {
   activeId?: string;
 }
 const { activeId } = Astro.props;
 
-const GROUPS: { category: DemoCategory; label: string }[] = [
-  { category: "controls", label: "Controls" },
-  { category: "layout", label: "Layout" },
-  { category: "effects", label: "Effects" },
-  { category: "3d-xr", label: "3D · XR" },
-];
+const GROUPS = CATEGORIES;
 ---
 
 <nav class="left-nav" aria-label="Demo catalog">

@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEMOS } from "../src/registry";
+import { DEMOS, CATEGORIES } from "../src/registry";
 
-const CATEGORIES = new Set(["controls", "layout", "effects", "3d-xr"]);
+const VALID = new Set<string>(CATEGORIES.map((c) => c.category));
 
 function main(): void {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -14,7 +14,7 @@ function main(): void {
   for (const d of DEMOS) {
     if (seen.has(d.id)) errors.push(`duplicate id: ${d.id}`);
     seen.add(d.id);
-    if (!CATEGORIES.has(d.category))
+    if (!VALID.has(d.category))
       errors.push(`${d.id}: invalid category "${d.category}"`);
     if (!existsSync(join(demosRoot, d.id, "demo.js")))
       errors.push(`${d.id}: missing src/demos/${d.id}/demo.js`);

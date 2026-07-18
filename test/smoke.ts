@@ -24,8 +24,13 @@ const SHOT_DIR = join(REPO_ROOT, "test", "__screenshots__");
 const PORT = 8973;
 const BASE = `http://127.0.0.1:${PORT}`;
 
-// One representative demo per nav category (route = /<category>/<id>/).
+// Every materials/effects demo (the showcase tier) plus one representative
+// per remaining nav category (route = /<category>/<id>/).
 const DEMOS = [
+  { category: "materials", id: "liquid-glass" },
+  { category: "materials", id: "ceramic" },
+  { category: "materials", id: "jelly" },
+  { category: "effects", id: "glitch-text" },
   { category: "effects", id: "particle-button" },
   { category: "controls", id: "controls-form" },
   { category: "layout", id: "virtual-list" },

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { DEMOS } from "../src/registry";
+import { DEMOS, CATEGORIES } from "../src/registry";
 
-const CATEGORIES = new Set(["controls", "layout", "effects", "3d-xr"]);
+const VALID = new Set<string>(CATEGORIES.map((c) => c.category));
 
 describe("DEMOS registry", () => {
   test("is non-empty", () => {
@@ -18,7 +18,7 @@ describe("DEMOS registry", () => {
       expect(d.id.length).toBeGreaterThan(0);
       expect(d.title.length).toBeGreaterThan(0);
       expect(d.description.length).toBeGreaterThan(0);
-      expect(CATEGORIES.has(d.category)).toBe(true);
+      expect(VALID.has(d.category)).toBe(true);
       expect(Array.isArray(d.tags)).toBe(true);
       expect(d.packages.length).toBeGreaterThan(0);
     }
