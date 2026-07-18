@@ -51,10 +51,11 @@ function buildModal(): {
 }
 
 function initSearch(): void {
-  const trigger = document.querySelector<HTMLButtonElement>(
+  const triggerEl = document.querySelector<HTMLButtonElement>(
     "[data-search-trigger]",
   );
-  if (!trigger) return;
+  if (!triggerEl) return;
+  const trigger: HTMLButtonElement = triggerEl;
   const { overlay, input, list } = buildModal();
   let results: Entry[] = [];
   let active = 0;
