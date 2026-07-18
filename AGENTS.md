@@ -36,7 +36,7 @@ keep their canvases on the site's cream palette (`#f7f4ee` ground, coral
 `#d97757` / peach `#f2b880` accents) so the catalog reads as one product.
 
 1. Create `src/demos/<id>/demo.js` (native JS ES module importing from `@vectojs/core`/`@vectojs/ui`) and `src/demos/<id>/index.html` (importmap with pinned esm.sh URLs + `no-ff-webgpu.js` first + canvas + `<script type="module" src="./demo.js">`).
-2. Add a `Demo` entry to `DEMOS` in `src/registry/index.ts` (id, title, description, category, tags, packages). Categories and their nav order live in `src/registry/types.ts` (`CATEGORIES`); the landing page, left nav, checker, and tests all read from it.
+2. Create `src/demos/<id>/meta.ts` exporting a `default: DemoMeta` (`title`, `description`, `category`, `tags`, `packages`, `order`) — one file per demo, so adding a demo never touches a file another demo's PR is also touching. Run `bun run inline:sources` to regenerate `src/registry/generated-meta.ts` (committed, like `generated-sources.ts`) and pick it up in `DEMOS`. Categories and their nav order live in `src/registry/types.ts` (`CATEGORIES`); the landing page, left nav, checker, and tests all read from it.
 3. Default to the 2D/CPU point backend; only set `pointBackend: 'webgl'` if the demo needs it, and tag it so the smoke test covers it. Add showcase-tier demos to the route list in `test/smoke.ts`.
 4. **`Scene.add` takes ONE entity** — `scene.add(...list)` silently drops all but the first in plain JS (see forge/findings.md 2026-07-18). Loop instead.
 5. Rich material surfaces (blur, radial gradients, composite masking, source-rect sampling) belong in offscreen canvases composed with raw Canvas2D; the entity then draws one `drawImage`. `IRenderer` stays the only thing touching the scene canvas.

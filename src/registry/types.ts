@@ -10,8 +10,13 @@ export const CATEGORIES = [
 
 export type DemoCategory = (typeof CATEGORIES)[number]["category"];
 
-export interface Demo {
-  id: string;
+/**
+ * Authored per-demo metadata — lives at `src/demos/<id>/meta.ts` (the `id`
+ * itself is the folder name, not repeated here). One file per demo means
+ * adding a demo never touches a file another demo's PR is also touching, so
+ * two agents adding demos in parallel cannot merge-conflict on this data.
+ */
+export interface DemoMeta {
   title: string;
   description: string;
   category: DemoCategory;
@@ -20,8 +25,15 @@ export interface Demo {
   // display, and the version-lockstep check. It does NOT generate the
   // importmap — each demo's authored index.html owns that (see registry docs).
   packages: string[];
-  // Populated by the build inliner (Task 3) from the demo's authored files;
-  // empty at authoring time.
+  // Manual display-order tiebreaker within a category (ascending). Demos
+  // sharing a value fall back to alphabetical id order.
+  order: number;
+}
+
+export interface Demo extends DemoMeta {
+  id: string;
+  // Populated by the build inliner from the demo's authored files; empty at
+  // authoring time.
   moduleSource: string;
   htmlSource: string;
 }

@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEMOS, CATEGORIES } from "../src/registry";
@@ -11,6 +11,23 @@ function main(): void {
   const errors: string[] = [];
   const seen = new Set<string>();
 
+  // Catches a stale generated-meta.ts: a folder with meta.ts that `inline:sources`
+  // hasn't picked up yet (forgot to rerun the generator before this check).
+  const demoIds = new Set(DEMOS.map((d) => d.id));
+  if (existsSync(demosRoot)) {
+    for (const entry of readdirSync(demosRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      if (
+        existsSync(join(demosRoot, entry.name, "meta.ts")) &&
+        !demoIds.has(entry.name)
+      ) {
+        errors.push(
+          `${entry.name}: has meta.ts but is missing from the registry — run "bun run inline:sources"`,
+        );
+      }
+    }
+  }
+
   for (const d of DEMOS) {
     if (seen.has(d.id)) errors.push(`duplicate id: ${d.id}`);
     seen.add(d.id);
@@ -20,6 +37,8 @@ function main(): void {
       errors.push(`${d.id}: missing src/demos/${d.id}/demo.js`);
     if (!existsSync(join(demosRoot, d.id, "index.html")))
       errors.push(`${d.id}: missing src/demos/${d.id}/index.html`);
+    if (!existsSync(join(demosRoot, d.id, "meta.ts")))
+      errors.push(`${d.id}: missing src/demos/${d.id}/meta.ts`);
   }
 
   if (errors.length > 0) {
