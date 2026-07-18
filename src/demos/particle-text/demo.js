@@ -16,13 +16,18 @@ class FrameProbe extends Entity {
   }
   render() {}
   update(dt) {
+    const prevAvg = this.avgFrameTime();
     this.frameTimes.push(dt);
-    // A window this small (~330ms at 60fps) still smooths ordinary
-    // frame-to-frame noise, but doesn't let the average lag behind a real
-    // fps transition — a larger window held onto stale throttled-fps
-    // samples for roughly a full second after Scene un-throttled following
-    // interaction, making the HUD under-report responsiveness for far
-    // longer than the actual slowdown lasted.
+    // When a frame arrives dramatically faster than the running average
+    // (<60% of the previous avg), the Scene just un-throttled after idle.
+    // Discard stale idle samples so the average immediately reflects the
+    // new active speed — otherwise a short burst (3-5 frames at 200
+    // particles) gets drowned by the 17 idle 500ms records and the HUD
+    // reads ~2fps even during visible animation.
+    if (prevAvg > 0 && dt < prevAvg * 0.6) {
+      this.frameTimes = [dt];
+      return;
+    }
     if (this.frameTimes.length > 20) this.frameTimes.shift();
   }
   avgFrameTime() {
