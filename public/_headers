@@ -1,0 +1,16 @@
+# Cloudflare Pages custom headers — https://developers.cloudflare.com/pages/configuration/headers/
+#
+# Pages' default caching for static assets can set a long max-age on plain
+# files (observed: demo.js served with `cache-control: public, max-age=14400`
+# — 4 hours). Editing a demo and pushing a deploy then requires visitors to
+# hard-refresh (Ctrl+F5) to see the change; a normal reload serves the stale
+# cached demo.js from disk cache. Demo sources are small, change often, and
+# "the code shown is the code that runs" is the whole point of Motif — a
+# stale demo.js silently breaks that promise. Force revalidation on every
+# load for anything under the demo mirror and the JSON search index.
+
+/demos/*
+  Cache-Control: no-cache
+
+/search-index.json
+  Cache-Control: no-cache
