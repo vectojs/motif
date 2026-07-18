@@ -11,12 +11,18 @@ interface Props {
 const { demo } = Astro.props;
 ---
 
-<div class="shell">
+<div class="shell" id="shell" data-code-collapsed="true">
   <input type="checkbox" id="nav-toggle" class="nav-toggle" hidden />
   <TopBar />
   <LeftNav activeId={demo.id} />
   <label for="nav-toggle" class="nav-scrim" aria-label="Close navigation"
   ></label>
+  <div class="resize-handle" data-resize="nav" aria-hidden="true"></div>
   <CenterStage demo={demo} />
+  <div class="resize-handle" data-resize="code" aria-hidden="true"></div>
   <CodePanel demo={demo} />
 </div>
+
+<script>
+  import "./ShellLayout";
+</script>

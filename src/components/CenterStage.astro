@@ -52,6 +52,25 @@ const { demo } = Astro.props;
     <button class="vp" data-vp="360">360</button>
     <button class="vp" data-vp="768">768</button>
     <button class="vp" data-vp="1280">1280</button>
+    <button
+      class="vp"
+      type="button"
+      aria-label="Toggle fullscreen preview"
+      data-toggle-fullscreen
+      ><svg
+        class="icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        ><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path
+          d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"
+        ></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg
+      ></button
+    >
     <button class="vp vp-run" data-run
       ><svg
         class="icon"
@@ -68,6 +87,26 @@ const { demo } = Astro.props;
       > Run</button
     >
   </div>
+
+  <button
+    class="panel-toggle-btn stage-exit-fullscreen"
+    type="button"
+    aria-label="Exit fullscreen preview"
+    data-toggle-fullscreen
+    ><svg
+      class="icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      ><path d="M9 3v4a2 2 0 0 1-2 2H3"></path><path
+        d="M21 8h-4a2 2 0 0 1-2-2V3"></path><path d="M3 16h4a2 2 0 0 1 2 2v4"
+      ></path><path d="M16 21v-4a2 2 0 0 1 2-2h4"></path></svg
+    ></button
+  >
 </main>
 
 <script>

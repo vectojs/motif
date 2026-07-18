@@ -60,12 +60,20 @@ a {
 }
 
 .shell {
+  /* Panel widths are user-adjustable (drag the .resize-handle strips) and
+     persisted to localStorage by ShellLayout.ts, which writes these two
+     custom properties inline on .shell. Defaults match the pre-resizable
+     layout exactly. The handles are real (6px) grid columns rather than
+     absolutely-positioned overlays — unnamed grid children auto-place and
+     would otherwise fight grid-template-areas for a cell. */
+  --nav-w: 248px;
+  --code-w: 420px;
   display: grid;
-  grid-template-columns: 248px 1fr 420px;
+  grid-template-columns: var(--nav-w) 6px 1fr 6px var(--code-w);
   grid-template-rows: 52px 1fr;
   grid-template-areas:
-    "top top  top"
-    "nav main code";
+    "top   top  top  top  top"
+    "nav navh main codeh code";
   height: 100vh;
 }
 .shell > .topbar {
@@ -73,12 +81,22 @@ a {
 }
 .shell > .left-nav {
   grid-area: nav;
+  min-width: 0;
 }
 .shell > .center-stage {
   grid-area: main;
+  min-width: 0;
+  position: relative;
 }
 .shell > .code-panel {
   grid-area: code;
+  min-width: 0;
+}
+.resize-handle[data-resize="nav"] {
+  grid-area: navh;
+}
+.resize-handle[data-resize="code"] {
+  grid-area: codeh;
 }
 /* Drawer toggle: a hidden checkbox (in Shell, before .left-nav) driven by the
    topbar hamburger <label>. Only surfaces < 920px; on desktop the nav is a
@@ -86,6 +104,92 @@ a {
 .nav-toggle,
 .nav-toggle-btn {
   display: none;
+}
+
+/* --- Collapsible nav / code panels + fullscreen center stage ---
+   Desktop-only (the < 920px drawer nav and the < 1180px/920px stacked code
+   panel keep their own mobile behavior below and ignore these states). */
+.shell[data-nav-collapsed="true"] {
+  grid-template-columns: 0px 0px 1fr 6px var(--code-w);
+}
+.shell[data-nav-collapsed="true"] > .left-nav {
+  display: none;
+}
+.shell[data-code-collapsed="true"] {
+  grid-template-columns: var(--nav-w) 6px 1fr 0px 0px;
+}
+.shell[data-code-collapsed="true"] > .code-panel {
+  display: none;
+}
+.shell[data-nav-collapsed="true"][data-code-collapsed="true"] {
+  grid-template-columns: 0px 0px 1fr 0px 0px;
+}
+.shell[data-stage-fullscreen="true"] {
+  grid-template-columns: 0px 0px 1fr 0px 0px;
+  grid-template-rows: 0px 1fr;
+}
+.shell[data-stage-fullscreen="true"] > .topbar,
+.shell[data-stage-fullscreen="true"] > .left-nav,
+.shell[data-stage-fullscreen="true"] > .code-panel,
+.shell[data-stage-fullscreen="true"] > .resize-handle {
+  display: none;
+}
+.shell[data-stage-fullscreen="true"] > .center-stage {
+  grid-area: 1 / 1 / 3 / 6;
+}
+.shell[data-stage-fullscreen="true"] .stage-exit-fullscreen {
+  display: inline-flex;
+}
+
+/* Drag handles between panels: a 6px grid column, hover/drag paints a thin
+   accent line so the hit target reads as wider than it visually is. */
+.resize-handle {
+  position: relative;
+  cursor: col-resize;
+  z-index: 20;
+}
+.resize-handle:hover::after,
+.resize-handle.dragging::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: var(--brand-b);
+}
+.shell[data-nav-collapsed="true"] .resize-handle[data-resize="nav"],
+.shell[data-code-collapsed="true"] .resize-handle[data-resize="code"] {
+  display: none;
+}
+
+.panel-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.panel-toggle-btn:hover {
+  color: var(--text);
+  border-color: var(--rule-bright);
+}
+.panel-toggle-btn[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--brand-b);
+  background: color-mix(in srgb, var(--brand-b) 14%, var(--raised));
+}
+.stage-exit-fullscreen {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 30;
 }
 
 .topbar {
@@ -544,7 +648,15 @@ a {
 }
 
 @media (max-width: 1180px) {
-  .shell {
+  /* Resizing/collapsing panels is a desktop affordance; narrower layouts
+     stack instead, so the drag handles (and any collapsed state a user set
+     on a wider viewport) are moot here. Fullscreen still applies. */
+  .shell:not([data-stage-fullscreen="true"]),
+  .shell[data-nav-collapsed="true"]:not([data-stage-fullscreen="true"]),
+  .shell[data-code-collapsed="true"]:not([data-stage-fullscreen="true"]),
+  .shell[data-nav-collapsed="true"][data-code-collapsed="true"]:not(
+      [data-stage-fullscreen="true"]
+    ) {
     grid-template-columns: 220px 1fr;
     grid-template-rows: 52px 1fr 40vh;
     grid-template-areas:
@@ -552,10 +664,22 @@ a {
       "nav  main"
       "nav  code";
   }
+  .shell:not([data-stage-fullscreen="true"]) > .left-nav,
+  .shell:not([data-stage-fullscreen="true"]) > .code-panel {
+    display: block;
+  }
+  .resize-handle {
+    display: none;
+  }
 }
 
 @media (max-width: 920px) {
-  .shell {
+  .shell:not([data-stage-fullscreen="true"]),
+  .shell[data-nav-collapsed="true"]:not([data-stage-fullscreen="true"]),
+  .shell[data-code-collapsed="true"]:not([data-stage-fullscreen="true"]),
+  .shell[data-nav-collapsed="true"][data-code-collapsed="true"]:not(
+      [data-stage-fullscreen="true"]
+    ) {
     grid-template-columns: 1fr;
     grid-template-rows: 52px 1fr 42vh;
     grid-template-areas:
@@ -577,6 +701,10 @@ a {
     font-size: 15px;
   }
   .shell > .left-nav {
+    /* Overrides the desktop-only data-nav-collapsed display:none (set
+       outside any media query) in case a user collapsed the nav on a wide
+       viewport and then resized down to the drawer breakpoint. */
+    display: block;
     position: fixed;
     top: 52px;
     left: 0;
