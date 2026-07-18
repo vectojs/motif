@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/no-ff-webgpu.js"></script>
+    <title>Particle Text — Motif</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #f7f4ee;
+      }
+      #app {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #hud {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        font:
+          500 12px "JetBrains Mono",
+          monospace;
+        color: #2a2723;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(42, 39, 35, 0.16);
+        border-radius: 7px;
+        padding: 8px 12px;
+        line-height: 1.6;
+        z-index: 10;
+        white-space: pre;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "@vectojs/core": "https://esm.sh/@vectojs/core@1.11.1"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="canvas"></canvas>
+      <div id="hud">measuring…</div>
+    </div>
+    <script type="module" src="./demo.js"></script>
+  </body>
+</html>
