@@ -3,7 +3,7 @@ import type { DemoMeta } from "../../registry/types";
 export default {
   title: "Particle Text",
   description:
-    "A word rasterized once into a particle-cloud shape — spring-to-origin physics (ComputeParticleEntity) holds it together, and a click scatters it into the next word. The real text stays reachable through Ctrl+F and screen readers the whole time via a separate content-projection host.",
+    "Type any two words and Transform scatters the first into a particle cloud that reforms as the second — spring-to-origin physics (ComputeParticleEntity) holds each shape together. Adjustable particle count, transform duration, and a two-stop gradient (built from several color-tinted particle buckets). The real text stays reachable through Ctrl+F and screen readers the whole time via a separate, unselectable content-projection host.",
   category: "effects",
   tags: ["particles", "webgpu", "content-projection"],
   packages: ["@vectojs/core"],
