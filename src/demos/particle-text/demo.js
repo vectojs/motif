@@ -82,9 +82,21 @@ const SAMPLE_CANVAS_H = 220;
 // settle time depends on many factors (explosion force, word shape, canvas
 // size), so this is a "feel" control (faster/stiffer vs slower/softer) that
 // correlates loosely with the label, not a guaranteed-convergence timer.
+//
+// Tuning note (2026-07-19): ComputeParticleEntity.updateCPU's spring formula
+// is `vx = (vx + (ox-px)*springK*dt) * damping; px += vx*dt` — its settle
+// time is set by BOTH springK and damping together, not springK alone. The
+// original 0.12/0.7 pair left ~99.5% of the scatter distance uncrossed after
+// the whole 1.2s reference window (particles visibly "reformed" into the
+// wrong, half-scattered shape when Transform's window elapsed). springK=8.75
+// / damping=0.93 converges to <1% remaining distance by 1.2s at the engine's
+// 60fps target with no overshoot; springK is still clamped to 10 by the
+// engine, so extreme duration-slider values (e.g. 0.3s) can't fully
+// converge — that's an inherent tradeoff of a physically-modeled spring, not
+// a bug.
 const REFERENCE_DURATION_S = 1.2;
-const REFERENCE_SPRING_K = 0.12;
-const DAMPING = 0.7;
+const REFERENCE_SPRING_K = 8.75;
+const DAMPING = 0.93;
 
 // Rasterize `text` and return up to `maxPoints` (x, y) samples of its
 // opaque pixels, in the rasterizing canvas's own pixel space, along with the
