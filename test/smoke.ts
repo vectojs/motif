@@ -31,9 +31,13 @@ const DEMOS = [
   { category: "materials", id: "ceramic" },
   { category: "materials", id: "jelly" },
   { category: "materials", id: "mercury-blobs" },
+  { category: "materials", id: "frosted-glass" },
   { category: "effects", id: "glitch-text" },
   { category: "effects", id: "constellation-lines" },
   { category: "effects", id: "particle-text" },
+  { category: "effects", id: "ripple-text" },
+  { category: "effects", id: "particle-morph" },
+  { category: "effects", id: "glow-bloom" },
 ];
 
 const MIME: Record<string, string> = {

@@ -65,4 +65,40 @@ export const GENERATED_META: Record<string, DemoMeta> = {
     packages: ["@vectojs/core"],
     order: 40,
   },
+  "ripple-text": {
+    title: "Ripple Text",
+    description:
+      "Sine-wave text distortion with animated color gradient — characters undulate like a flag in wind",
+    category: "effects",
+    tags: ["text", "wave", "gradient"],
+    packages: ["@vectojs/core"],
+    order: 40,
+  },
+  "particle-morph": {
+    title: "Particle Morph",
+    description:
+      "Hundreds of particles automatically cycling between geometric shapes — circle, star, hexagon, diamond, heart",
+    category: "effects",
+    tags: ["particles", "morph", "shapes", "webgpu"],
+    packages: ["@vectojs/core"],
+    order: 50,
+  },
+  "glow-bloom": {
+    title: "Glow Bloom",
+    description:
+      "Post-processing bloom effect — bright shapes bloom and bleed light into surrounding space with adjustable spread and intensity",
+    category: "effects",
+    tags: ["bloom", "glow", "post-processing"],
+    packages: ["@vectojs/core"],
+    order: 60,
+  },
+  "frosted-glass": {
+    title: "Frosted Glass",
+    description:
+      "Draggable frosted-glass panels with adjustable blur, grain texture, and tilt — a translucent, etched-surface alternative to liquid glass",
+    category: "materials",
+    tags: ["glass", "frost", "blur", "grain"],
+    packages: ["@vectojs/core"],
+    order: 50,
+  },
 };
