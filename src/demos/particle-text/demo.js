@@ -264,10 +264,13 @@ function layoutWord(text, resetPositions) {
   const perBucketLocal = bucketizePoints(points, width);
   for (let i = 0; i < BUCKET_COUNT; i++) {
     const local = perBucketLocal[i];
-    const scenePoints = new Float32Array(local.length);
-    for (let j = 0; j < local.length; j += 2) {
-      scenePoints[j] = local[j] + offsetX;
-      scenePoints[j + 1] = local[j + 1] + offsetY;
+    const maxP = buckets[i].maxParticles;
+    const n = local.length / 2;
+    const scenePoints = new Float32Array(maxP * 2);
+    for (let j = 0; j < maxP; j++) {
+      const src = n > 1 ? Math.floor((j / maxP) * n) * 2 : 0;
+      scenePoints[j * 2] = local[src] + offsetX;
+      scenePoints[j * 2 + 1] = local[src + 1] + offsetY;
     }
     buckets[i].setOrigins(scenePoints, resetPositions);
   }
@@ -275,6 +278,7 @@ function layoutWord(text, resetPositions) {
   word.y = offsetY;
   word.width = width;
   word.height = height;
+  scene.markDirty();
 }
 
 function fit() {
@@ -376,6 +380,7 @@ function recolorBuckets() {
     const t = BUCKET_COUNT === 1 ? 0 : i / (BUCKET_COUNT - 1);
     buckets[i].baseColor = lerpColor(panel.colorA.value, panel.colorB.value, t);
   }
+  scene.markDirty();
 }
 panel.colorA.addEventListener("input", recolorBuckets);
 panel.colorB.addEventListener("input", recolorBuckets);

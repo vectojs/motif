@@ -92,25 +92,40 @@ class FrostedPanel extends Entity {
     roundedRect(ctx, 0, 0, this.pw, this.ph, this.cr);
     ctx.clip();
 
-    const bg = document.createElement("canvas");
-    bg.width = this.pw;
-    bg.height = this.ph;
-    const bctx = bg.getContext("2d");
+    if (!this._bg || this._bgW !== this.pw || this._bgH !== this.ph) {
+      this._bg = document.createElement("canvas");
+      this._bgW = this.pw;
+      this._bgH = this.ph;
+      this._bg.width = this.pw;
+      this._bg.height = this.ph;
+    }
+    const bctx = this._bg.getContext("2d");
+    bctx.clearRect(0, 0, this.pw, this.ph);
+    // ctx.canvas is the DPR-scaled backing store (physical pixels), but
+    // this._x/_y/pw/ph are logical scene-space (CSS pixel) coordinates —
+    // drawImage's source rect always reads physical pixels regardless of
+    // the renderer's ctx.scale(dpr,dpr) transform, so the source rect must
+    // be scaled up by dpr or it captures the wrong (much smaller) region.
+    const dpr = ctx.canvas.width / this.scene.width;
     bctx.drawImage(
       ctx.canvas,
-      this._x,
-      this._y,
-      this.pw,
-      this.ph,
+      this._x * dpr,
+      this._y * dpr,
+      this.pw * dpr,
+      this.ph * dpr,
       0,
       0,
       this.pw,
       this.ph,
     );
     bctx.filter = `blur(${this.blurRadius}px)`;
-    bctx.drawImage(bg, 0, 0);
+    bctx.drawImage(this._bg, 0, 0);
     bctx.filter = "none";
-    r.drawImage(bg, 0, 0);
+    // IRenderer.drawImage requires the full 5-arg (source, dx, dy, dw, dh)
+    // signature — unlike native CanvasRenderingContext2D.drawImage, it has
+    // no 3-arg overload, so omitting dw/dh passes them through as
+    // `undefined` and the native call silently draws nothing.
+    r.drawImage(this._bg, 0, 0, this.pw, this.ph);
 
     ctx.fillStyle = `rgba(255,255,255,${this.tintOpacity})`;
     ctx.fillRect(0, 0, this.pw, this.ph);
@@ -118,7 +133,7 @@ class FrostedPanel extends Entity {
     if (this.grainIntensity > 0) {
       const grain = getGrain(this.pw, this.ph);
       r.globalAlpha = Math.min(1, this.grainIntensity * 3);
-      r.drawImage(grain, 0, 0);
+      r.drawImage(grain, 0, 0, this.pw, this.ph);
       r.globalAlpha = 1;
     }
 
@@ -197,6 +212,7 @@ canvas.addEventListener("pointermove", (e) => {
   const r = canvas.getBoundingClientRect();
   dragging._x = e.clientX - r.left - dragOffX;
   dragging._y = e.clientY - r.top - dragOffY;
+  scene.markDirty();
 });
 canvas.addEventListener("pointerup", () => {
   dragging = null;
@@ -215,6 +231,7 @@ function updateAllPanels() {
     p.grainIntensity = Number(grainInput.value) / 100;
     p.tintOpacity = Number(tintInput.value) / 100;
   }
+  scene.markDirty();
 }
 
 blurInput.addEventListener("input", () => {

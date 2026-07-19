@@ -121,6 +121,9 @@ class MorphController extends Entity {
   isPointInside() {
     return false;
   }
+  hasPendingAnimations() {
+    return true;
+  }
   render() {}
 
   update(dt) {
@@ -200,10 +203,15 @@ scene.start();
 
 function rebuildScene() {
   const count = Number(document.getElementById("input-count").value);
-  controller.rebuild(count);
   const W = app.clientWidth || 900;
   const H = app.clientHeight || 500;
+  // Resize BEFORE rebuild: rebuild()'s shape geometry reads
+  // this.scene.width/height for centering/radius — resizing after would
+  // leave the initial shape computed against the stale (or 900x500
+  // fallback) size, clustering all particles in a small sub-region until
+  // the next resize event happens to fire.
   if (W > 0 && H > 0) scene.resize(W, H);
+  controller.rebuild(count);
 }
 
 document.getElementById("input-count").addEventListener("input", () => {
@@ -216,11 +224,14 @@ document.getElementById("input-speed").addEventListener("input", () => {
   controller.speed = Number(document.getElementById("input-speed").value) / 5;
   document.getElementById("value-speed").textContent =
     controller.speed.toFixed(1);
+  scene.markDirty();
 });
 
 document.getElementById("input-color").addEventListener("input", () => {
-  if (controller.bucket)
+  if (controller.bucket) {
     controller.bucket.baseColor = document.getElementById("input-color").value;
+    scene.markDirty();
+  }
 });
 
 const observer = new ResizeObserver(() => {

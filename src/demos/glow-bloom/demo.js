@@ -16,6 +16,9 @@ class BloomPipeline extends Entity {
   isPointInside() {
     return false;
   }
+  hasPendingAnimations() {
+    return true;
+  }
 
   update(dt) {
     this.time += dt;
@@ -26,12 +29,20 @@ class BloomPipeline extends Entity {
     const H = this.scene.height;
     if (W === 0 || H === 0) return;
 
-    this.brightCanvas.width = W;
-    this.brightCanvas.height = H;
+    if (this._w !== W || this._h !== H) {
+      this._w = W;
+      this._h = H;
+      this.brightCanvas.width = W;
+      this.brightCanvas.height = H;
+    }
     const blurW = Math.max(1, Math.round(W * 0.4));
     const blurH = Math.max(1, Math.round(H * 0.4));
-    this.bloomCanvas.width = blurW;
-    this.bloomCanvas.height = blurH;
+    if (this._blurW !== blurW || this._blurH !== blurH) {
+      this._blurW = blurW;
+      this._blurH = blurH;
+      this.bloomCanvas.width = blurW;
+      this.bloomCanvas.height = blurH;
+    }
 
     const bc = this.brightCanvas.getContext("2d");
     bc.clearRect(0, 0, W, H);
@@ -50,7 +61,12 @@ class BloomPipeline extends Entity {
     r.globalAlpha = this.intensity;
     r.drawImage(this.bloomCanvas, 0, 0, W, H);
     r.globalAlpha = 1;
-    r.drawImage(this.brightCanvas, 0, 0);
+    // IRenderer.drawImage requires the full 5-arg (source, dx, dy, dw, dh)
+    // signature — unlike native CanvasRenderingContext2D.drawImage, it has
+    // no 3-arg overload, so omitting dw/dh passes them through as
+    // `undefined` and the native call silently draws nothing (this was
+    // why the sharp foreground never appeared, only the blurred bloom).
+    r.drawImage(this.brightCanvas, 0, 0, W, H);
     r.restore();
   }
 

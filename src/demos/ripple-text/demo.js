@@ -13,6 +13,9 @@ class RippleText extends Entity {
   isPointInside() {
     return false;
   }
+  hasPendingAnimations() {
+    return true;
+  }
 
   update(dt) {
     this.time += dt;
@@ -29,13 +32,21 @@ class RippleText extends Entity {
 
     const widths = chars.map((ch) => ctx.measureText(ch).width);
     const totalW = widths.reduce((s, w) => s + w, 0) + (chars.length - 1) * 2;
-    let cx = (this.scene.width - totalW) / 2;
+    const startX = (this.scene.width - totalW) / 2;
+    let cx = startX;
     const cy = this.scene.height / 2;
 
     for (let i = 0; i < chars.length; i++) {
       const w = widths[i];
       const xPos = cx + w / 2;
-      const t = totalW > 0 ? xPos / totalW : 0;
+      // Gradient position must be relative to the text's OWN span —
+      // distance walked from the word's first character (xPos - startX,
+      // where startX is fixed at the word's left edge), not xPos itself.
+      // xPos is an absolute canvas coordinate starting around half the
+      // canvas width, so dividing it directly by totalW (just the text's
+      // width) overshot past 1.0 for every character and rendered the
+      // whole word in colorB only.
+      const t = totalW > 0 ? (xPos - startX) / totalW : 0;
       const yOff =
         Math.sin(xPos * this.freq + this.time * this.speed * 0.001) *
           this.amplitude *
