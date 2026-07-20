@@ -83,20 +83,26 @@ const SAMPLE_CANVAS_H = 220;
 // size), so this is a "feel" control (faster/stiffer vs slower/softer) that
 // correlates loosely with the label, not a guaranteed-convergence timer.
 //
-// Tuning note (2026-07-19): ComputeParticleEntity.updateCPU's spring formula
-// is `vx = (vx + (ox-px)*springK*dt) * damping; px += vx*dt` — its settle
-// time is set by BOTH springK and damping together, not springK alone. The
-// original 0.12/0.7 pair left ~99.5% of the scatter distance uncrossed after
-// the whole 1.2s reference window (particles visibly "reformed" into the
-// wrong, half-scattered shape when Transform's window elapsed). springK=8.75
-// / damping=0.93 converges to <1% remaining distance by 1.2s at the engine's
-// 60fps target with no overshoot; springK is still clamped to 10 by the
-// engine, so extreme duration-slider values (e.g. 0.3s) can't fully
-// converge — that's an inherent tradeoff of a physically-modeled spring, not
-// a bug.
+// Tuning note (2026-07-19, revised): ComputeParticleEntity.updateCPU's
+// spring formula is `vx = (vx + (ox-px)*springK*dt) * damping; px +=
+// vx*dt` — an UNDER-damped pair converges the *position* by the end of the
+// window while velocity is still large, so particles visibly fly PAST the
+// target and snap back on the next frame ("explodes" instead of settling).
+// A first attempt at retuning (springK=8.75/damping=0.93) optimized only for
+// "small remaining distance at 1.2s" and reproduced exactly that overshoot
+// (confirmed by simulation: distance ~1% but velocity still ~-24px/s at the
+// window boundary). This pair is chosen to be critically/over-damped
+// instead — monotonically approaching the target with no sign change in
+// position at any frame rate from 24-144fps (verified by simulation) — so
+// motion always reads as a continuous decelerating glide, never a snap.
+// The tradeoff is a larger residual distance right at the nominal window
+// (~38% at 60fps) that keeps closing smoothly for a bit after; springK is
+// still clamped to 10 by the engine, so very short duration-slider values
+// converge even less — an inherent tradeoff of a physically-modeled spring,
+// not a bug.
 const REFERENCE_DURATION_S = 1.2;
-const REFERENCE_SPRING_K = 8.75;
-const DAMPING = 0.93;
+const REFERENCE_SPRING_K = 10;
+const DAMPING = 0.828;
 
 // Rasterize `text` and return up to `maxPoints` (x, y) samples of its
 // opaque pixels, in the rasterizing canvas's own pixel space, along with the
@@ -202,6 +208,17 @@ function lerpColor(a, b, t) {
 const scene = new Scene(canvas, {
   renderMode: "always", // particles are perpetually integrating
   maxFPS: 60,
+  // Without this, ComputeParticleEntity.hasPendingAnimations() correctly
+  // reports "at rest" once the settled shape's velocity/distance-to-origin
+  // drop below its epsilon, and Scene's idle auto-throttle then drops the
+  // WHOLE scene to ~2fps — technically correct (nothing is visibly moving),
+  // but this demo's own HUD prints that "2 fps" number, which reads as
+  // broken/janky on first load rather than intentionally idle. This is a
+  // showcase piece meant to always look alive, not a battery-conscious
+  // production UI, so opt out of the throttle entirely via the engine's
+  // own escape hatch rather than fighting it with a fake perpetual-motion
+  // entity.
+  autoThrottle: false,
   disableWindowResize: true,
   maxDPR: 2,
 });

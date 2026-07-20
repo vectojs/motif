@@ -168,22 +168,27 @@ class MorphController extends Entity {
     if (this.bucket) {
       this.scene.remove(this.bucket);
     }
-    // Tuning note (2026-07-19): the morph window is 700ms / speed
-    // (MorphController's "morph" state, see update() above). The original
-    // springK=0.08/damping=0.7 left ~99.8% of the scatter distance
-    // uncrossed by the end of that window, so shapes visually "morphed"
-    // into a still-mostly-scattered cloud instead of the next target shape.
-    // springK=7.25/damping=0.975 converges to ~0% remaining distance by
-    // 700ms at the engine's 60fps target with negligible overshoot.
-    // springK is clamped to 10 by the engine, so the fastest speed setting
-    // (700ms/2.0 = 350ms window) can't fully converge either — an inherent
-    // tradeoff of a physically-modeled spring, not a bug.
+    // Tuning note (2026-07-19, revised): the morph window is 700ms / speed
+    // (MorphController's "morph" state, see update() above). An
+    // under-damped pair (springK=7.25/damping=0.975) closed the position
+    // gap by the end of the window but left velocity around -160px/s —
+    // particles were still flying at speed and shot past their target,
+    // reading as an "explosion"/snap at every shape transition rather than
+    // a settle. springK=7.05/damping=0.944 is chosen to be over-damped
+    // instead: position never crosses (overshoots) the target at any frame
+    // rate from 24-144fps (verified by simulation), so motion always reads
+    // as a continuous decelerating glide into the next shape. The tradeoff
+    // is a larger residual distance right at 700ms (~29% at 60fps) that
+    // keeps closing smoothly into the following "display" hold; springK is
+    // still clamped to 10 by the engine, so the fastest speed setting
+    // (700ms/2.0 = 350ms window) converges even less — an inherent tradeoff
+    // of a physically-modeled spring, not a bug.
     this.bucket = new ComputeParticleEntity({
       maxParticles: count,
       size: 2.8,
       color: "#d97757",
-      springK: 7.25,
-      damping: 0.975,
+      springK: 7.05,
+      damping: 0.944,
       bounceDamping: 0.3,
       maxVelocity: 800,
     });

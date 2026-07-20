@@ -26,18 +26,22 @@ class GradientBg extends Entity {
   }
 }
 
-let grainCache = null;
-let grainW = 0;
-let grainH = 0;
+// Keyed by "wxh" rather than a single last-used slot: the three panels have
+// different sizes, so a single-slot cache thrashed every render call (each
+// panel's draw evicted the previous panel's grain), regenerating a brand
+// new random noise texture on every single frame for whichever panel didn't
+// match the slot — which read as the grain visibly crawling/flickering
+// instead of being a static per-panel texture.
+const grainCacheBySize = new Map();
 
 function getGrain(w, h) {
-  if (grainCache && grainW === w && grainH === h) return grainCache;
-  grainW = w;
-  grainH = h;
-  grainCache = document.createElement("canvas");
-  grainCache.width = w;
-  grainCache.height = h;
-  const ctx = grainCache.getContext("2d");
+  const key = `${w}x${h}`;
+  const cached = grainCacheBySize.get(key);
+  if (cached) return cached;
+  const grain = document.createElement("canvas");
+  grain.width = w;
+  grain.height = h;
+  const ctx = grain.getContext("2d");
   const id = ctx.createImageData(w, h);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -48,7 +52,8 @@ function getGrain(w, h) {
     d[i + 3] = 60;
   }
   ctx.putImageData(id, 0, 0);
-  return grainCache;
+  grainCacheBySize.set(key, grain);
+  return grain;
 }
 
 function hexRgba(hex, a) {
@@ -61,23 +66,32 @@ class FrostedPanel extends Entity {
   grainIntensity = 0.06;
   tintOpacity = 0.25;
   cr = 14;
-  tilt = 0;
 
-  constructor(x, y, w, h, tilt) {
+  constructor(x, y, w, h, tiltDeg) {
     super("FrostedPanel");
-    this.baseX = x;
-    this.baseY = y;
-    this._x = x;
-    this._y = y;
+    // Use Entity's own x/y/rotation rather than custom fields: Scene's
+    // renderNode() already does translate(node.x, node.y) + rotate(node.rotation)
+    // for every entity before calling render(). A prior version of this demo
+    // stored position in fields named `_x`/`_y` and translated/rotated a
+    // SECOND time inside render() — but `_x`/`_y` are the exact private
+    // backing-field names Entity.x/Entity.y already use internally, so that
+    // write silently aliased the same slot Entity reads for its own
+    // transform. The net effect doubled every panel's on-screen position
+    // every frame while isPointInside() (and the drag handlers) kept
+    // computing hit-testing against the single, un-doubled value — so the
+    // draggable area never matched what was drawn, and the smallest/most
+    // tilted panel landed far enough off to look entirely invisible.
+    this.x = x;
+    this.y = y;
+    this.rotation = (tiltDeg * Math.PI) / 180;
     this.pw = w;
     this.ph = h;
-    this.tilt = tilt || 0;
   }
 
   isPointInside(px, py) {
-    const dx = px - this._x;
-    const dy = py - this._y;
-    const rad = (-this.tilt * Math.PI) / 180;
+    const dx = px - this.x;
+    const dy = py - this.y;
+    const rad = -this.rotation;
     const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
     const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
     return rx >= 0 && rx <= this.pw && ry >= 0 && ry <= this.ph;
@@ -85,10 +99,8 @@ class FrostedPanel extends Entity {
 
   render(r) {
     const ctx = r.getContext();
-    r.save();
-    r.translate(this._x, this._y);
-    r.rotate((this.tilt * Math.PI) / 180);
-
+    // Scene's renderNode() has already applied translate(x,y) + rotate(rotation)
+    // before calling render(), so local drawing starts at (0,0) with no tilt.
     roundedRect(ctx, 0, 0, this.pw, this.ph, this.cr);
     ctx.clip();
 
@@ -101,16 +113,16 @@ class FrostedPanel extends Entity {
     }
     const bctx = this._bg.getContext("2d");
     bctx.clearRect(0, 0, this.pw, this.ph);
-    // ctx.canvas is the DPR-scaled backing store (physical pixels), but
-    // this._x/_y/pw/ph are logical scene-space (CSS pixel) coordinates —
-    // drawImage's source rect always reads physical pixels regardless of
-    // the renderer's ctx.scale(dpr,dpr) transform, so the source rect must
-    // be scaled up by dpr or it captures the wrong (much smaller) region.
+    // ctx.getTransform() gives the CURRENT accumulated transform (translate
+    // + rotate applied by Scene, at DPR scale) — mapping this entity's local
+    // (0,0) origin to its true position on the physical backing store, so
+    // the source rect below is correct even while the panel is rotated.
+    const t = ctx.getTransform();
     const dpr = ctx.canvas.width / this.scene.width;
     bctx.drawImage(
       ctx.canvas,
-      this._x * dpr,
-      this._y * dpr,
+      t.e,
+      t.f,
       this.pw * dpr,
       this.ph * dpr,
       0,
@@ -141,8 +153,6 @@ class FrostedPanel extends Entity {
     r.lineWidth = 1.5;
     roundedRect(ctx, 0.5, 0.5, this.pw - 1, this.ph - 1, this.cr);
     r.stroke();
-
-    r.restore();
   }
 }
 
@@ -197,8 +207,8 @@ canvas.addEventListener("pointerdown", (e) => {
     const p = panels[i];
     if (p.isPointInside(mx, my)) {
       dragging = p;
-      dragOffX = mx - p._x;
-      dragOffY = my - p._y;
+      dragOffX = mx - p.x;
+      dragOffY = my - p.y;
       scene.remove(p);
       scene.add(p);
       panels.splice(i, 1);
@@ -210,8 +220,8 @@ canvas.addEventListener("pointerdown", (e) => {
 canvas.addEventListener("pointermove", (e) => {
   if (!dragging) return;
   const r = canvas.getBoundingClientRect();
-  dragging._x = e.clientX - r.left - dragOffX;
-  dragging._y = e.clientY - r.top - dragOffY;
+  dragging.x = e.clientX - r.left - dragOffX;
+  dragging.y = e.clientY - r.top - dragOffY;
   scene.markDirty();
 });
 canvas.addEventListener("pointerup", () => {
