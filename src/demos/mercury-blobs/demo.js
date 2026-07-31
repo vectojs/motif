@@ -1,4 +1,4 @@
-import { Scene, Entity } from "@vectojs/core";
+import { Scene, Entity } from '@vectojs/core';
 
 // Mercury blobs: draggable circles that visually MERGE into one shape when
 // close and split apart when pulled away — the classic "goo" trick, not a
@@ -42,12 +42,12 @@ class FrameProbe extends Entity {
   }
 }
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
-const hud = document.getElementById("hud");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
+const hud = document.getElementById('hud');
 
-const SILVER = "#b9c2c9";
-const SILVER_DARK = "#7d868c";
+const SILVER = '#b9c2c9';
+const SILVER_DARK = '#7d868c';
 // Fraction of a CSS pixel per buffer pixel — deliberately LOW-res, not
 // scaled to devicePixelRatio. Measured directly with per-pass
 // performance.now() timers around GooLayer.render(): ctx.filter =
@@ -117,7 +117,7 @@ class Blob extends Entity {
     if (!this._a11yRoundPatched && this.scene) {
       const el = this.scene.getA11yElement(this.id);
       if (el) {
-        el.style.borderRadius = "50%";
+        el.style.borderRadius = '50%';
         this._a11yRoundPatched = true;
       }
     }
@@ -158,10 +158,10 @@ class Blob extends Entity {
 // by pointer listeners below, not by this entity) are reflected immediately.
 class GooLayer extends Entity {
   constructor(blobs) {
-    super("GooLayer");
+    super('GooLayer');
     this.blobs = blobs;
-    this.buffer = document.createElement("canvas");
-    this.ctx = this.buffer.getContext("2d");
+    this.buffer = document.createElement('canvas');
+    this.ctx = this.buffer.getContext('2d');
     // Contrast pass output: a SEPARATE canvas, not the same buffer drawn
     // onto itself. Measured directly: ctx.drawImage(buffer, ...) where
     // buffer is ctx's OWN canvas, with an active ctx.filter, cost ~27ms per
@@ -170,8 +170,8 @@ class GooLayer extends Entity {
     // fast compositing path the browser would otherwise take, forcing a
     // full software re-rasterization. Drawing into a distinct destination
     // canvas instead dropped that same pass to well under 1ms.
-    this.contrastBuffer = document.createElement("canvas");
-    this.contrastCtx = this.contrastBuffer.getContext("2d");
+    this.contrastBuffer = document.createElement('canvas');
+    this.contrastCtx = this.contrastBuffer.getContext('2d');
   }
 
   resize(width, height) {
@@ -198,14 +198,14 @@ class GooLayer extends Entity {
 
     // Pass 1: solid fills, heavily blurred — this is what makes nearby
     // blobs' blurred halos overlap and merge.
-    ctx.filter = "blur(14px)";
+    ctx.filter = 'blur(14px)';
     ctx.fillStyle = SILVER;
     for (const b of this.blobs) {
       ctx.beginPath();
       ctx.arc(b.x + b.radius, b.y + b.radius, b.radius * 0.82, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.filter = "none";
+    ctx.filter = 'none';
 
     // Pass 2: a steep contrast ramp snaps the blur back to a near-hard
     // edge — this is the actual "goo" step. Values above ~30% opacity in
@@ -223,16 +223,16 @@ class GooLayer extends Entity {
     // cuts this same pass to ~6.5ms and restores 60fps.
     contrastCtx.setTransform(1, 0, 0, 1, 0, 0);
     contrastCtx.clearRect(0, 0, contrastBuffer.width, contrastBuffer.height);
-    contrastCtx.filter = "contrast(28) brightness(0.94)";
+    contrastCtx.filter = 'contrast(28) brightness(0.94)';
     contrastCtx.drawImage(buffer, 0, 0);
-    contrastCtx.filter = "none";
+    contrastCtx.filter = 'none';
 
     // Metallic shading: a radial highlight per blob, masked to the merged
     // silhouette so it reads as one liquid surface catching light, not N
     // separate spheres. Drawn onto contrastBuffer (the now-authoritative
     // silhouette) via the same "source-atop" masking trick as the original.
     contrastCtx.setTransform(s, 0, 0, s, 0, 0);
-    contrastCtx.globalCompositeOperation = "source-atop";
+    contrastCtx.globalCompositeOperation = 'source-atop';
     for (const b of this.blobs) {
       const cx = b.x + b.radius;
       const cy = b.y + b.radius;
@@ -244,29 +244,23 @@ class GooLayer extends Entity {
         cy,
         b.radius * 1.1,
       );
-      g.addColorStop(0, "rgba(255, 255, 255, 0.9)");
-      g.addColorStop(0.35, "rgba(255, 255, 255, 0.15)");
+      g.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      g.addColorStop(0.35, 'rgba(255, 255, 255, 0.15)');
       g.addColorStop(0.7, `${SILVER_DARK}00`);
       g.addColorStop(1, `${SILVER_DARK}55`);
       contrastCtx.fillStyle = g;
       contrastCtx.beginPath();
-      contrastCtx.arc(
-        b.x + b.radius,
-        b.y + b.radius,
-        b.radius * 1.1,
-        0,
-        Math.PI * 2,
-      );
+      contrastCtx.arc(b.x + b.radius, b.y + b.radius, b.radius * 1.1, 0, Math.PI * 2);
       contrastCtx.fill();
     }
-    contrastCtx.globalCompositeOperation = "source-over";
+    contrastCtx.globalCompositeOperation = 'source-over';
 
     r.drawImage(contrastBuffer, 0, 0, this.width, this.height);
   }
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "always", // blobs drift continuously
+  renderMode: 'always', // blobs drift continuously
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
@@ -287,7 +281,7 @@ let grabbed = null;
 let grabDX = 0;
 let grabDY = 0;
 function wireDrag(b) {
-  b.on("pointerdown", (e) => {
+  b.on('pointerdown', (e) => {
     grabbed = b;
     b.dragging = true;
     grabDX = e.sceneX - b.x;
@@ -355,25 +349,23 @@ observer.observe(app);
 
 scene.start();
 
-window.addEventListener("pointermove", (e) => {
+window.addEventListener('pointermove', (e) => {
   if (!grabbed) return;
   const rect = canvas.getBoundingClientRect();
   grabbed.x = e.clientX - rect.left - grabDX;
   grabbed.y = e.clientY - rect.top - grabDY;
 });
-window.addEventListener("pointerup", () => {
+window.addEventListener('pointerup', () => {
   if (grabbed) grabbed.dragging = false;
   grabbed = null;
 });
 
 // --- Blob-count buttons ---
-const countButtons = { "btn-count-3": 3, "btn-count-6": 6, "btn-count-12": 12 };
+const countButtons = { 'btn-count-3': 3, 'btn-count-6': 6, 'btn-count-12': 12 };
 for (const [id, count] of Object.entries(countButtons)) {
-  document.getElementById(id).addEventListener("click", () => {
+  document.getElementById(id).addEventListener('click', () => {
     for (const other of Object.keys(countButtons))
-      document
-        .getElementById(other)
-        .setAttribute("aria-pressed", String(other === id));
+      document.getElementById(other).setAttribute('aria-pressed', String(other === id));
     spawnBlobs(count); // wires drag on the new blobs itself
   });
 }

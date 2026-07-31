@@ -12,3 +12,5 @@ tmp/
 .superpowers/
 /public/demos/
 /test/__screenshots__/
+.carryctx/config.local.toml
+.worktrees/

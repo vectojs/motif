@@ -1,4 +1,4 @@
-import { Scene, Entity, ComputeParticleEntity } from "@vectojs/core";
+import { Scene, Entity, ComputeParticleEntity } from '@vectojs/core';
 
 // Measures the Scene's REAL render cadence, not the display's vsync rate.
 // An independent requestAnimationFrame loop fires every vsync tick
@@ -60,19 +60,19 @@ class FrameProbe extends Entity {
 // particle cloud kept triggering the browser's native text-selection drag
 // instead of reaching the canvas underneath.
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
-const hud = document.getElementById("hud");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
+const hud = document.getElementById('hud');
 const panel = {
-  origin: document.getElementById("input-origin"),
-  target: document.getElementById("input-target"),
-  transform: document.getElementById("btn-transform"),
-  count: document.getElementById("input-count"),
-  countValue: document.getElementById("value-count"),
-  duration: document.getElementById("input-duration"),
-  durationValue: document.getElementById("value-duration"),
-  colorA: document.getElementById("input-color-a"),
-  colorB: document.getElementById("input-color-b"),
+  origin: document.getElementById('input-origin'),
+  target: document.getElementById('input-target'),
+  transform: document.getElementById('btn-transform'),
+  count: document.getElementById('input-count'),
+  countValue: document.getElementById('value-count'),
+  duration: document.getElementById('input-duration'),
+  durationValue: document.getElementById('value-duration'),
+  colorA: document.getElementById('input-color-a'),
+  colorB: document.getElementById('input-color-b'),
 };
 
 const BUCKET_COUNT = 8;
@@ -108,17 +108,17 @@ const DAMPING = 0.828;
 // opaque pixels, in the rasterizing canvas's own pixel space, along with the
 // tight bounding box of those samples (so the caller can re-center them).
 function sampleTextPoints(text, fontPx, maxPoints) {
-  const safeText = text.trim() || " ";
-  const probe = document.createElement("canvas");
-  const pctx = probe.getContext("2d");
+  const safeText = text.trim() || ' ';
+  const probe = document.createElement('canvas');
+  const pctx = probe.getContext('2d');
   const font = `900 ${fontPx}px "Inter", system-ui, sans-serif`;
   pctx.font = font;
   const width = Math.ceil(pctx.measureText(safeText).width) + 40;
   probe.width = width;
   probe.height = SAMPLE_CANVAS_H;
   pctx.font = font;
-  pctx.fillStyle = "#000";
-  pctx.textBaseline = "middle";
+  pctx.fillStyle = '#000';
+  pctx.textBaseline = 'middle';
   pctx.fillText(safeText, 20, SAMPLE_CANVAS_H / 2);
 
   const { data } = pctx.getImageData(0, 0, width, SAMPLE_CANVAS_H);
@@ -170,8 +170,8 @@ function sampleTextPoints(text, fontPx, maxPoints) {
 // cloud currently is.
 class Word extends Entity {
   constructor() {
-    super("Word");
-    this.text = "";
+    super('Word');
+    this.text = '';
   }
   isPointInside() {
     return false;
@@ -206,7 +206,7 @@ function lerpColor(a, b, t) {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "always", // particles are perpetually integrating
+  renderMode: 'always', // particles are perpetually integrating
   maxFPS: 60,
   // Without this, ComputeParticleEntity.hasPendingAnimations() correctly
   // reports "at rest" once the settled shape's velocity/distance-to-origin
@@ -280,11 +280,7 @@ let seeded = false;
 function layoutWord(text, resetPositions) {
   const totalParticles = buckets.reduce((s, b) => s + b.maxParticles, 0);
   word.text = text;
-  const { points, width, height } = sampleTextPoints(
-    text,
-    fontPx,
-    totalParticles,
-  );
+  const { points, width, height } = sampleTextPoints(text, fontPx, totalParticles);
   const w = app.clientWidth || 900;
   const h = app.clientHeight || 500;
   const offsetX = (w - width) / 2;
@@ -328,7 +324,7 @@ function fit() {
     seeded = true;
   }
   fontPx = Math.max(56, Math.min(130, w * 0.14));
-  layoutWord(panel.origin.value.toUpperCase() || "VECTOJS", true);
+  layoutWord(panel.origin.value.toUpperCase() || 'VECTOJS', true);
 }
 
 function init() {
@@ -351,8 +347,8 @@ init();
 let transforming = false;
 function runTransform() {
   if (transforming) return;
-  const originText = panel.origin.value.toUpperCase() || "VECTOJS";
-  const targetText = panel.target.value.toUpperCase() || "CANVAS";
+  const originText = panel.origin.value.toUpperCase() || 'VECTOJS';
+  const targetText = panel.target.value.toUpperCase() || 'CANVAS';
   transforming = true;
   panel.transform.disabled = true;
 
@@ -380,24 +376,24 @@ function runTransform() {
     }, 260);
   }, 50);
 }
-panel.transform.addEventListener("click", runTransform);
+panel.transform.addEventListener('click', runTransform);
 
 // Particle-count slider: rebuilds the bucket entities (maxParticles is
 // fixed at ComputeParticleEntity construction, not runtime-adjustable) and
 // re-seeds + re-lays-out the ORIGIN word immediately so the preview stays
 // live while dragging.
-panel.count.addEventListener("input", () => {
+panel.count.addEventListener('input', () => {
   panel.countValue.textContent = panel.count.value;
 });
-panel.count.addEventListener("change", () => {
+panel.count.addEventListener('change', () => {
   rebuildBuckets(Number(panel.count.value));
   fit();
 });
 
-panel.duration.addEventListener("input", () => {
+panel.duration.addEventListener('input', () => {
   panel.durationValue.textContent = `${(Number(panel.duration.value) / 10).toFixed(1)}s`;
 });
-panel.duration.addEventListener("change", () => {
+panel.duration.addEventListener('change', () => {
   const springK = currentSpringK();
   for (const b of buckets) b.springK = springK;
 });
@@ -411,8 +407,8 @@ function recolorBuckets() {
   }
   scene.markDirty();
 }
-panel.colorA.addEventListener("input", recolorBuckets);
-panel.colorB.addEventListener("input", recolorBuckets);
+panel.colorA.addEventListener('input', recolorBuckets);
+panel.colorB.addEventListener('input', recolorBuckets);
 
 // navigator.gpu being present only means the API exists, not that a real
 // adapter was found — Scene tries WebGPU lazily/async on the first
@@ -428,7 +424,7 @@ function updateHud() {
     const fps = 1000 / avg;
     const total = buckets.reduce((s, b) => s + b.maxParticles, 0);
     hud.textContent =
-      `${total} particles (${BUCKET_COUNT} gradient buckets) · webgpu ${gpuRequested ? "requested" : "unavailable"}\n` +
+      `${total} particles (${BUCKET_COUNT} gradient buckets) · webgpu ${gpuRequested ? 'requested' : 'unavailable'}\n` +
       `frame ${avg.toFixed(1)}ms · ${fps.toFixed(0)} fps\n` +
       `edit From/To, then Transform`;
   }

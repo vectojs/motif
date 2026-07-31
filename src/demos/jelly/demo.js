@@ -1,4 +1,4 @@
-import { Scene, Entity } from "@vectojs/core";
+import { Scene, Entity } from '@vectojs/core';
 
 // Jelly buttons: each blob's outline is a ring of mass-spring points around a
 // rest circle. Poke it and the impulse travels around the rim; neighboring
@@ -7,10 +7,10 @@ import { Scene, Entity } from "@vectojs/core";
 // isPointInside() hit-tests the DEFORMED outline (not a box), and
 // hasPendingAnimations() keeps the scene awake exactly while there is motion.
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
 
-const MUTED = "#8a8073";
+const MUTED = '#8a8073';
 
 const POINTS = 14;
 const STIFFNESS = 130; // pull toward each point's rest radius
@@ -39,7 +39,7 @@ class JellyButton extends Entity {
     for (let i = 0; i < POINTS; i++) this.pts.push({ x: 0, y: 0 });
     this.rebuildOutline();
 
-    this.on("pointerdown", (e) => {
+    this.on('pointerdown', (e) => {
       this.poke(e.localX, e.localY);
       this.pokes += 1;
     });
@@ -63,8 +63,7 @@ class JellyButton extends Entity {
 
   hasPendingAnimations() {
     for (let i = 0; i < POINTS; i++) {
-      if (Math.abs(this.offset[i]) > 0.05 || Math.abs(this.velocity[i]) > 0.05)
-        return true;
+      if (Math.abs(this.offset[i]) > 0.05 || Math.abs(this.velocity[i]) > 0.05) return true;
     }
     return super.hasPendingAnimations();
   }
@@ -77,9 +76,7 @@ class JellyButton extends Entity {
       const prev = offset[(i + POINTS - 1) % POINTS];
       const next = offset[(i + 1) % POINTS];
       const accel =
-        -offset[i] * STIFFNESS +
-        (prev + next - 2 * offset[i]) * NEIGHBOR -
-        velocity[i] * DAMPING;
+        -offset[i] * STIFFNESS + (prev + next - 2 * offset[i]) * NEIGHBOR - velocity[i] * DAMPING;
       velocity[i] += accel * step;
     }
     for (let i = 0; i < POINTS; i++) offset[i] += velocity[i] * step;
@@ -105,10 +102,7 @@ class JellyButton extends Entity {
     for (let i = 0, j = POINTS - 1; i < POINTS; j = i++) {
       const a = this.pts[i];
       const b = this.pts[j];
-      if (
-        a.y > p.y !== b.y > p.y &&
-        p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x
-      )
+      if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x)
         inside = true;
     }
     return inside;
@@ -177,22 +171,22 @@ class JellyButton extends Entity {
       this.baseRadius - label.length * 5.5,
       this.baseRadius + 7,
       '700 19px "Inter", sans-serif',
-      "rgba(255, 255, 255, 0.96)",
+      'rgba(255, 255, 255, 0.96)',
     );
   }
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "onDemand", // hasPendingAnimations() wakes it while wobbling
+  renderMode: 'onDemand', // hasPendingAnimations() wakes it while wobbling
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
 });
 
 const jellies = [
-  new JellyButton("poke", "#d97757", 74),
-  new JellyButton("me", "#7fb6a4", 56),
-  new JellyButton("too", "#f2b880", 46),
+  new JellyButton('poke', '#d97757', 74),
+  new JellyButton('me', '#7fb6a4', 56),
+  new JellyButton('too', '#f2b880', 46),
 ];
 // One at a time: Scene.add takes a single entity (unlike the variadic
 // Entity.add) — in plain JS a spread here silently drops the extras.
@@ -204,7 +198,7 @@ class Caption extends Entity {
   }
   render(r) {
     r.fillText(
-      "Mass-spring rims · hit-testing follows the deformed outline",
+      'Mass-spring rims · hit-testing follows the deformed outline',
       0,
       0,
       '400 14px "Inter", sans-serif',
@@ -212,7 +206,7 @@ class Caption extends Entity {
     );
   }
 }
-const caption = new Caption("Caption");
+const caption = new Caption('Caption');
 scene.add(caption);
 
 function fit() {
@@ -222,9 +216,7 @@ function fit() {
   scene.resize(w, h);
   const cy = h / 2 + 10;
   const gap = 46;
-  const total =
-    jellies.reduce((sum, j) => sum + j.baseRadius * 2, 0) +
-    gap * (jellies.length - 1);
+  const total = jellies.reduce((sum, j) => sum + j.baseRadius * 2, 0) + gap * (jellies.length - 1);
   let x = (w - total) / 2;
   for (const j of jellies) {
     j.setPosition(x, cy - j.baseRadius);

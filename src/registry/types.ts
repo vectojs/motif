@@ -4,11 +4,11 @@
 // covered by the docs reference and the Gallery's Creation section instead —
 // see AGENTS.md's content policy.
 export const CATEGORIES = [
-  { category: "materials", label: "Materials" },
-  { category: "effects", label: "Effects" },
+  { category: 'materials', label: 'Materials' },
+  { category: 'effects', label: 'Effects' },
 ] as const;
 
-export type DemoCategory = (typeof CATEGORIES)[number]["category"];
+export type DemoCategory = (typeof CATEGORIES)[number]['category'];
 
 /**
  * Authored per-demo metadata — lives at `src/demos/<id>/meta.ts` (the `id`

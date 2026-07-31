@@ -1,4 +1,4 @@
-import { Scene, Entity } from "@vectojs/core";
+import { Scene, Entity } from '@vectojs/core';
 
 // Glitch text, light-theme edition: instead of RGB-split-on-black, the burst
 // reads as a misregistered PRINT — coral and teal plates slipping out of
@@ -8,14 +8,14 @@ import { Scene, Entity } from "@vectojs/core";
 // entity draws. Between bursts the scene is fully idle (onDemand): a timer
 // arms the burst and hasPendingAnimations() carries it while it runs.
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
 
-const TEXT = "MOTIF";
-const INK = "#2a2723";
-const CORAL = "#d97757";
-const TEAL = "#4d9d8f";
-const MUTED = "#8a8073";
+const TEXT = 'MOTIF';
+const INK = '#2a2723';
+const CORAL = '#d97757';
+const TEAL = '#4d9d8f';
+const MUTED = '#8a8073';
 const SPRITE_SCALE = Math.min(window.devicePixelRatio || 1, 2);
 const BURST_MS = 420;
 const CALM_MIN_MS = 1400;
@@ -23,14 +23,14 @@ const CALM_VAR_MS = 1800;
 
 class GlitchText extends Entity {
   constructor(text) {
-    super("GlitchText");
+    super('GlitchText');
     this.text = text;
     this.fontSize = 120;
     this.pad = 24; // sprite margin so slipped plates never clip
     this.interactive = true;
     this.plates = null; // { ink, coral, teal } offscreen sprites
-    this.frame = document.createElement("canvas");
-    this.fctx = this.frame.getContext("2d");
+    this.frame = document.createElement('canvas');
+    this.fctx = this.frame.getContext('2d');
     this.burstUntil = 0;
     this.armed = 0;
   }
@@ -41,7 +41,7 @@ class GlitchText extends Entity {
     this.fontSize = fontSize;
     const s = SPRITE_SCALE;
     const font = `900 ${fontSize}px "Inter", system-ui, sans-serif`;
-    const probe = document.createElement("canvas").getContext("2d");
+    const probe = document.createElement('canvas').getContext('2d');
     probe.font = font;
     const metrics = probe.measureText(this.text);
     const w = Math.ceil(metrics.width) + this.pad * 2;
@@ -52,13 +52,13 @@ class GlitchText extends Entity {
     this.frame.height = h * s;
 
     const bakePlate = (color) => {
-      const c = document.createElement("canvas");
+      const c = document.createElement('canvas');
       c.width = w * s;
       c.height = h * s;
-      const ctx = c.getContext("2d");
+      const ctx = c.getContext('2d');
       ctx.scale(s, s);
       ctx.font = font;
-      ctx.textBaseline = "top";
+      ctx.textBaseline = 'top';
       ctx.fillStyle = color;
       ctx.fillText(this.text, this.pad, this.pad);
       return c;
@@ -108,7 +108,7 @@ class GlitchText extends Entity {
 
     // Slipped color plates first, multiplied so overlaps darken like ink.
     const slip = 10 * s * k;
-    fctx.globalCompositeOperation = "multiply";
+    fctx.globalCompositeOperation = 'multiply';
     fctx.drawImage(
       plates.coral,
       -slip + (Math.random() - 0.5) * 3 * s,
@@ -119,7 +119,7 @@ class GlitchText extends Entity {
       slip + (Math.random() - 0.5) * 3 * s,
       (Math.random() - 0.5) * 2 * s,
     );
-    fctx.globalCompositeOperation = "source-over";
+    fctx.globalCompositeOperation = 'source-over';
 
     // Ink plate on top, torn into horizontal scanbands with jitter.
     const bands = 7;
@@ -132,7 +132,7 @@ class GlitchText extends Entity {
 
     // Dropout blocks: small rects where the "press" missed the paper.
     const blocks = Math.round(5 * k);
-    fctx.globalCompositeOperation = "destination-out";
+    fctx.globalCompositeOperation = 'destination-out';
     for (let i = 0; i < blocks; i++) {
       fctx.fillRect(
         Math.random() * w,
@@ -141,14 +141,12 @@ class GlitchText extends Entity {
         (3 + Math.random() * 8) * s,
       );
     }
-    fctx.globalCompositeOperation = "source-over";
+    fctx.globalCompositeOperation = 'source-over';
   }
 
   isPointInside(gx, gy) {
     const p = this.worldToLocal(gx, gy);
-    return (
-      !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height
-    );
+    return !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height;
   }
 
   render(r) {
@@ -175,7 +173,7 @@ class GlitchText extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "onDemand",
+  renderMode: 'onDemand',
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
@@ -183,7 +181,7 @@ const scene = new Scene(canvas, {
 
 const title = new GlitchText(TEXT);
 scene.add(title);
-title.on("pointerdown", () => title.burst());
+title.on('pointerdown', () => title.burst());
 
 class Caption extends Entity {
   isPointInside() {
@@ -191,7 +189,7 @@ class Caption extends Entity {
   }
   render(r) {
     r.fillText(
-      "Misregistered print plates · click the headline to slip the press",
+      'Misregistered print plates · click the headline to slip the press',
       0,
       0,
       '400 14px "Inter", sans-serif',
@@ -199,17 +197,14 @@ class Caption extends Entity {
     );
   }
 }
-const caption = new Caption("Caption");
+const caption = new Caption('Caption');
 scene.add(caption);
 
 function layout() {
   const w = app.clientWidth;
   const h = app.clientHeight;
   title.setPosition((w - title.width) / 2, (h - title.height) / 2 - 12);
-  caption.setPosition(
-    (w - title.width) / 2 + title.pad,
-    h / 2 + title.height / 2 + 24,
-  );
+  caption.setPosition((w - title.width) / 2 + title.pad, h / 2 + title.height / 2 + 24);
 }
 
 function fit() {

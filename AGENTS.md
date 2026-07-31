@@ -1,6 +1,6 @@
 # Motif Agent Guide 🤖
 
-**Motif** is the VectoJS component & effect gallery — a Storybook × shadcn/ui × CodePen showcase where every VectoJS component, animation, and effect can be found, previewed live, and copied as a reference. Design spec + implementation plan live in `vectojs-docs/superpowers/{specs,plans}/2026-07-16-motif*`.
+**Motif** is the VectoJS component & effect gallery — a Storybook × shadcn/ui × CodePen showcase where every VectoJS component, animation, and effect can be found, previewed live, and copied as a reference.
 
 ---
 

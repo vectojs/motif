@@ -1,4 +1,4 @@
-import { Scene, Entity, SpatialHashGrid } from "@vectojs/core";
+import { Scene, Entity, SpatialHashGrid } from '@vectojs/core';
 
 // Constellation lines: N points drift and connect to nearby neighbors with a
 // distance-faded line. The line pass is a genuine O(n) vs O(n²) neighbor
@@ -39,12 +39,12 @@ class FrameProbe extends Entity {
   }
 }
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
-const hud = document.getElementById("hud");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
+const hud = document.getElementById('hud');
 
-const INK = "#2a2723";
-const CORAL = "#d97757";
+const INK = '#2a2723';
+const CORAL = '#d97757';
 // LINK_DIST=90 at up to 4000 points measured ~288 average neighbors/point —
 // dense enough that SpatialHashGrid's per-point Map/Set hashing overhead
 // exceeded the candidate-count savings, so brute-force actually won (a real,
@@ -123,7 +123,7 @@ class Point extends Entity {
 // measurement of the algorithm itself.
 class LinkLines extends Entity {
   constructor(points) {
-    super("LinkLines");
+    super('LinkLines');
     this.points = points;
     this.useGrid = true;
     this.lastQueryMs = 0;
@@ -203,7 +203,7 @@ class LinkLines extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "always", // points drift continuously
+  renderMode: 'always', // points drift continuously
   maxFPS: 60,
   disableWindowResize: true,
   // Capped at 1 CSS pixel per canvas pixel, not the display's native DPR.
@@ -217,7 +217,7 @@ const scene = new Scene(canvas, {
   // little visible improvement (confirmed with a side-by-side screenshot
   // at deviceScaleFactor:2) — not worth a >7x frame-time cost.
   maxDPR: 1,
-  pointBackend: "webgl", // routes Point.getBatchCircle() to the GPU layer
+  pointBackend: 'webgl', // routes Point.getBatchCircle() to the GPU layer
 });
 
 const frameProbe = new FrameProbe();
@@ -283,41 +283,39 @@ scene.start();
 
 // --- UI: point-count buttons + algorithm toggle ---
 const countButtons = {
-  "btn-count-low": 600,
-  "btn-count-mid": 1500,
-  "btn-count-high": 4000,
+  'btn-count-low': 600,
+  'btn-count-mid': 1500,
+  'btn-count-high': 4000,
 };
 for (const [id, count] of Object.entries(countButtons)) {
-  document.getElementById(id).addEventListener("click", () => {
+  document.getElementById(id).addEventListener('click', () => {
     for (const other of Object.keys(countButtons)) {
-      document
-        .getElementById(other)
-        .setAttribute("aria-pressed", String(other === id));
+      document.getElementById(other).setAttribute('aria-pressed', String(other === id));
     }
     spawnPoints(count);
   });
 }
 
-const algoBtn = document.getElementById("btn-algo");
-algoBtn.addEventListener("click", () => {
+const algoBtn = document.getElementById('btn-algo');
+algoBtn.addEventListener('click', () => {
   if (!lines) return;
   lines.useGrid = !lines.useGrid;
   algoBtn.textContent = lines.useGrid
-    ? "algo: grid (click for brute-force)"
-    : "algo: brute-force (click for grid)";
-  algoBtn.setAttribute("aria-pressed", String(!lines.useGrid));
+    ? 'algo: grid (click for brute-force)'
+    : 'algo: brute-force (click for grid)';
+  algoBtn.setAttribute('aria-pressed', String(!lines.useGrid));
 });
 
 function updateHud() {
   const avg = frameProbe.avgFrameTime();
   if (avg > 0) {
     const fps = 1000 / avg;
-    const queryMs = lines ? lines.lastQueryMs.toFixed(2) : "—";
+    const queryMs = lines ? lines.lastQueryMs.toFixed(2) : '—';
     const lineCount = lines ? lines.lastLineCount : 0;
     hud.textContent =
       `${points.length} pts · ${lineCount} links\n` +
       `frame ${avg.toFixed(1)}ms · ${fps.toFixed(0)} fps\n` +
-      `query ${queryMs}ms (${lines?.useGrid ? "grid" : "brute-force"})`;
+      `query ${queryMs}ms (${lines?.useGrid ? 'grid' : 'brute-force'})`;
   }
   setTimeout(updateHud, 250);
 }

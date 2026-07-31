@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
-import { DEMOS } from "../registry";
+import type { APIRoute } from 'astro';
+import { DEMOS } from '../registry';
 
 const index = DEMOS.map((d) => ({
   id: d.id,
@@ -11,5 +11,5 @@ const index = DEMOS.map((d) => ({
 
 export const GET: APIRoute = () =>
   new Response(JSON.stringify(index), {
-    headers: { "content-type": "application/json" },
+    headers: { 'content-type': 'application/json' },
   });

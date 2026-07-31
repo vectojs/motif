@@ -1,4 +1,4 @@
-import { Scene, Entity } from "@vectojs/core";
+import { Scene, Entity } from '@vectojs/core';
 
 // Ceramic keys: glazed-clay keycaps with a physical press. The material is
 // baked ONCE into offscreen sprites (glaze gradients, speckle, rim shading,
@@ -6,10 +6,10 @@ import { Scene, Entity } from "@vectojs/core";
 // engine's spring on y/scale. That split — expensive texture offline, cheap
 // motion online — is the pattern for any tactile material in VectoJS.
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
 
-const MUTED = "#8a8073";
+const MUTED = '#8a8073';
 const SPRITE_SCALE = Math.min(window.devicePixelRatio || 1, 2);
 
 // Deterministic speckle so every load fires the same kiln.
@@ -34,10 +34,10 @@ function shade(hex, amount) {
 // radial glaze bloom, rim shading, speckle, crisp highlight arc.
 function bakeCeramic(width, height, radius, glaze, seed) {
   const s = SPRITE_SCALE;
-  const c = document.createElement("canvas");
+  const c = document.createElement('canvas');
   c.width = width * s;
   c.height = height * s;
-  const ctx = c.getContext("2d");
+  const ctx = c.getContext('2d');
   ctx.scale(s, s);
 
   ctx.beginPath();
@@ -60,9 +60,9 @@ function bakeCeramic(width, height, radius, glaze, seed) {
     height * 0.26,
     width * 0.7,
   );
-  bloom.addColorStop(0, "rgba(255, 255, 255, 0.5)");
-  bloom.addColorStop(0.45, "rgba(255, 255, 255, 0.12)");
-  bloom.addColorStop(1, "rgba(255, 255, 255, 0)");
+  bloom.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+  bloom.addColorStop(0.45, 'rgba(255, 255, 255, 0.12)');
+  bloom.addColorStop(1, 'rgba(255, 255, 255, 0)');
   ctx.fillStyle = bloom;
   ctx.fillRect(0, 0, width, height);
 
@@ -81,7 +81,7 @@ function bakeCeramic(width, height, radius, glaze, seed) {
 
   // Rim: darker toward the bottom edge (clay thickness), bright top lip.
   ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(58, 44, 32, 0.24)";
+  ctx.strokeStyle = 'rgba(58, 44, 32, 0.24)';
   ctx.beginPath();
   ctx.roundRect(0.5, 2, width - 1, height - 2.5, radius);
   ctx.stroke();
@@ -92,7 +92,7 @@ function bakeCeramic(width, height, radius, glaze, seed) {
   // where the box's bottom edge falls. Trace only the rounded corners + the
   // straight span between them instead.
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
   const r = radius - 1;
   ctx.beginPath();
   ctx.moveTo(1.5, height * 0.42);
@@ -111,13 +111,13 @@ function bakeCeramic(width, height, radius, glaze, seed) {
 function bakeShadow(width, height, radius) {
   const s = SPRITE_SCALE;
   const pad = 26;
-  const c = document.createElement("canvas");
+  const c = document.createElement('canvas');
   c.width = (width + pad * 2) * s;
   c.height = (height + pad * 2) * s;
-  const ctx = c.getContext("2d");
+  const ctx = c.getContext('2d');
   ctx.scale(s, s);
-  ctx.filter = "blur(11px)";
-  ctx.fillStyle = "rgba(70, 55, 40, 0.38)";
+  ctx.filter = 'blur(11px)';
+  ctx.fillStyle = 'rgba(70, 55, 40, 0.38)';
   ctx.beginPath();
   ctx.roundRect(pad, pad + 4, width, height - 2, radius);
   ctx.fill();
@@ -140,14 +140,14 @@ class CeramicKey extends Entity {
     // pops back with one small overshoot — clay, not rubber.
     this.setTransition({ y: { stiffness: 620, damping: 21 } });
 
-    this.on("pointerdown", () => {
+    this.on('pointerdown', () => {
       this.y = this.baseY + PRESS_DEPTH;
       onPress(label);
     });
-    this.on("pointerup", () => {
+    this.on('pointerup', () => {
       this.y = this.baseY;
     });
-    this.on("pointerleave", () => {
+    this.on('pointerleave', () => {
       this.y = this.baseY;
     });
   }
@@ -159,9 +159,7 @@ class CeramicKey extends Entity {
 
   isPointInside(gx, gy) {
     const p = this.worldToLocal(gx, gy);
-    return (
-      !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height
-    );
+    return !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height;
   }
 
   render(r) {
@@ -186,14 +184,14 @@ class CeramicKey extends Entity {
       this.width / 2 - 8,
       this.height / 2 + 9,
       '700 24px "Inter", sans-serif',
-      "rgba(42, 39, 35, 0.78)",
+      'rgba(42, 39, 35, 0.78)',
     );
   }
 }
 
 class CeramicToggle extends Entity {
   constructor(width, height) {
-    super("CeramicToggle");
+    super('CeramicToggle');
     this.width = width;
     this.height = height;
     this.interactive = true;
@@ -203,22 +201,14 @@ class CeramicToggle extends Entity {
     // Two variants ("off" raw clay, "on" warm coral wash) crossfade with the
     // knob so the whole toggle — not just the small knob — reads as changed.
     const s = SPRITE_SCALE;
-    this.trackOff = bakeTrack(width, height, s, [
-      "#cfc4b2",
-      "#e6ddcc",
-      "#f2ecdf",
-    ]);
-    this.trackOn = bakeTrack(width, height, s, [
-      "#e2a184",
-      "#eec19f",
-      "#f6dcc3",
-    ]);
+    this.trackOff = bakeTrack(width, height, s, ['#cfc4b2', '#e6ddcc', '#f2ecdf']);
+    this.trackOn = bakeTrack(width, height, s, ['#e2a184', '#eec19f', '#f6dcc3']);
 
     function bakeTrack(w, h, scale, stops) {
-      const c = document.createElement("canvas");
+      const c = document.createElement('canvas');
       c.width = w * scale;
       c.height = h * scale;
-      const ctx = c.getContext("2d");
+      const ctx = c.getContext('2d');
       ctx.scale(scale, scale);
       ctx.beginPath();
       ctx.roundRect(0, 0, w, h, h / 2);
@@ -230,34 +220,22 @@ class CeramicToggle extends Entity {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
       ctx.lineWidth = 2.5;
-      ctx.strokeStyle = "rgba(58, 44, 32, 0.3)";
+      ctx.strokeStyle = 'rgba(58, 44, 32, 0.3)';
       ctx.beginPath();
       ctx.roundRect(1, 1.75, w - 2, h, h / 2);
       ctx.stroke();
       return c;
     }
 
-    this.knobOff = bakeCeramic(
-      this.knobSize,
-      this.knobSize,
-      this.knobSize / 2,
-      "#e9dfcd",
-      7,
-    );
-    this.knobOn = bakeCeramic(
-      this.knobSize,
-      this.knobSize,
-      this.knobSize / 2,
-      "#d97757",
-      8,
-    );
+    this.knobOff = bakeCeramic(this.knobSize, this.knobSize, this.knobSize / 2, '#e9dfcd', 7);
+    this.knobOn = bakeCeramic(this.knobSize, this.knobSize, this.knobSize / 2, '#d97757', 8);
     // t: knob travel AND glaze crossfade, integrated in update() — an
     // example of custom motion (hasPendingAnimations) beside engine springs.
     this.t = 0;
     this.tTarget = 0;
     this.vel = 0;
 
-    this.on("click", () => {
+    this.on('click', () => {
       this.checked = !this.checked;
       this.tTarget = this.checked ? 1 : 0;
       this.scene?.markDirty();
@@ -266,9 +244,7 @@ class CeramicToggle extends Entity {
 
   isPointInside(gx, gy) {
     const p = this.worldToLocal(gx, gy);
-    return (
-      !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height
-    );
+    return !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height;
   }
 
   // Scene contract: while this returns true the idle throttle stays off, so
@@ -304,7 +280,7 @@ class CeramicToggle extends Entity {
     r.drawImage(this.knobOn, x, 5, this.knobSize, this.knobSize);
     r.restore();
     r.fillText(
-      this.checked ? "glaze: coral" : "glaze: raw",
+      this.checked ? 'glaze: coral' : 'glaze: raw',
       this.width + 16,
       this.height / 2 + 5,
       '400 14px "Inter", sans-serif',
@@ -314,13 +290,13 @@ class CeramicToggle extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: "onDemand", // material demos are static between interactions
+  renderMode: 'onDemand', // material demos are static between interactions
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
 });
 
-let pressed = "—";
+let pressed = '—';
 class Board extends Entity {
   isPointInside() {
     return false;
@@ -336,15 +312,15 @@ class Board extends Entity {
   }
 }
 
-const board = new Board("Board");
+const board = new Board('Board');
 scene.add(board);
 
 const KEY_W = 112;
 const KEY_H = 96;
 const keys = [
-  new CeramicKey("⌘", "#d97757", KEY_W, KEY_H, 11, onPress),
-  new CeramicKey("⇧", "#7fb6a4", KEY_W, KEY_H, 12, onPress),
-  new CeramicKey("⏎", "#e9d8a6", KEY_W, KEY_H, 13, onPress),
+  new CeramicKey('⌘', '#d97757', KEY_W, KEY_H, 11, onPress),
+  new CeramicKey('⇧', '#7fb6a4', KEY_W, KEY_H, 12, onPress),
+  new CeramicKey('⏎', '#e9d8a6', KEY_W, KEY_H, 13, onPress),
 ];
 function onPress(label) {
   pressed = label;

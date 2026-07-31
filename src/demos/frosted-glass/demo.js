@@ -1,4 +1,4 @@
-import { Scene, Entity } from "@vectojs/core";
+import { Scene, Entity } from '@vectojs/core';
 
 class GradientBg extends Entity {
   isPointInside() {
@@ -8,13 +8,13 @@ class GradientBg extends Entity {
     const ctx = r.getContext();
     const W = this.scene.width;
     const H = this.scene.height;
-    ctx.fillStyle = "#f7f4ee";
+    ctx.fillStyle = '#f7f4ee';
     ctx.fillRect(0, 0, W, H);
     const blobs = [
-      { x: W * 0.18, y: H * 0.25, r: Math.min(W, H) * 0.4, c: "#d97757" },
-      { x: W * 0.75, y: H * 0.65, r: Math.min(W, H) * 0.35, c: "#38bdf8" },
-      { x: W * 0.5, y: H * 0.15, r: Math.min(W, H) * 0.25, c: "#f2b880" },
-      { x: W * 0.85, y: H * 0.2, r: Math.min(W, H) * 0.2, c: "#a78bfa" },
+      { x: W * 0.18, y: H * 0.25, r: Math.min(W, H) * 0.4, c: '#d97757' },
+      { x: W * 0.75, y: H * 0.65, r: Math.min(W, H) * 0.35, c: '#38bdf8' },
+      { x: W * 0.5, y: H * 0.15, r: Math.min(W, H) * 0.25, c: '#f2b880' },
+      { x: W * 0.85, y: H * 0.2, r: Math.min(W, H) * 0.2, c: '#a78bfa' },
     ];
     for (const b of blobs) {
       const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
@@ -38,10 +38,10 @@ function getGrain(w, h) {
   const key = `${w}x${h}`;
   const cached = grainCacheBySize.get(key);
   if (cached) return cached;
-  const grain = document.createElement("canvas");
+  const grain = document.createElement('canvas');
   grain.width = w;
   grain.height = h;
-  const ctx = grain.getContext("2d");
+  const ctx = grain.getContext('2d');
   const id = ctx.createImageData(w, h);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -68,7 +68,7 @@ class FrostedPanel extends Entity {
   cr = 14;
 
   constructor(x, y, w, h, tiltDeg) {
-    super("FrostedPanel");
+    super('FrostedPanel');
     // Use Entity's own x/y/rotation rather than custom fields: Scene's
     // renderNode() already does translate(node.x, node.y) + rotate(node.rotation)
     // for every entity before calling render(). A prior version of this demo
@@ -105,13 +105,13 @@ class FrostedPanel extends Entity {
     ctx.clip();
 
     if (!this._bg || this._bgW !== this.pw || this._bgH !== this.ph) {
-      this._bg = document.createElement("canvas");
+      this._bg = document.createElement('canvas');
       this._bgW = this.pw;
       this._bgH = this.ph;
       this._bg.width = this.pw;
       this._bg.height = this.ph;
     }
-    const bctx = this._bg.getContext("2d");
+    const bctx = this._bg.getContext('2d');
     bctx.clearRect(0, 0, this.pw, this.ph);
     // ctx.getTransform() gives the CURRENT accumulated transform (translate
     // + rotate applied by Scene, at DPR scale) — mapping this entity's local
@@ -119,20 +119,10 @@ class FrostedPanel extends Entity {
     // the source rect below is correct even while the panel is rotated.
     const t = ctx.getTransform();
     const dpr = ctx.canvas.width / this.scene.width;
-    bctx.drawImage(
-      ctx.canvas,
-      t.e,
-      t.f,
-      this.pw * dpr,
-      this.ph * dpr,
-      0,
-      0,
-      this.pw,
-      this.ph,
-    );
+    bctx.drawImage(ctx.canvas, t.e, t.f, this.pw * dpr, this.ph * dpr, 0, 0, this.pw, this.ph);
     bctx.filter = `blur(${this.blurRadius}px)`;
     bctx.drawImage(this._bg, 0, 0);
-    bctx.filter = "none";
+    bctx.filter = 'none';
     // IRenderer.drawImage requires the full 5-arg (source, dx, dy, dw, dh)
     // signature — unlike native CanvasRenderingContext2D.drawImage, it has
     // no 3-arg overload, so omitting dw/dh passes them through as
@@ -149,7 +139,7 @@ class FrostedPanel extends Entity {
       r.globalAlpha = 1;
     }
 
-    r.strokeStyle = "rgba(255,255,255,0.25)";
+    r.strokeStyle = 'rgba(255,255,255,0.25)';
     r.lineWidth = 1.5;
     roundedRect(ctx, 0.5, 0.5, this.pw - 1, this.ph - 1, this.cr);
     r.stroke();
@@ -171,11 +161,11 @@ function roundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-const app = document.getElementById("app");
-const canvas = document.getElementById("canvas");
+const app = document.getElementById('app');
+const canvas = document.getElementById('canvas');
 
 const scene = new Scene(canvas, {
-  renderMode: "always",
+  renderMode: 'always',
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
@@ -199,7 +189,7 @@ let dragging = null;
 let dragOffX = 0;
 let dragOffY = 0;
 
-canvas.addEventListener("pointerdown", (e) => {
+canvas.addEventListener('pointerdown', (e) => {
   const r = canvas.getBoundingClientRect();
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
@@ -217,23 +207,23 @@ canvas.addEventListener("pointerdown", (e) => {
     }
   }
 });
-canvas.addEventListener("pointermove", (e) => {
+canvas.addEventListener('pointermove', (e) => {
   if (!dragging) return;
   const r = canvas.getBoundingClientRect();
   dragging.x = e.clientX - r.left - dragOffX;
   dragging.y = e.clientY - r.top - dragOffY;
   scene.markDirty();
 });
-canvas.addEventListener("pointerup", () => {
+canvas.addEventListener('pointerup', () => {
   dragging = null;
 });
-canvas.addEventListener("pointerleave", () => {
+canvas.addEventListener('pointerleave', () => {
   dragging = null;
 });
 
-const blurInput = document.getElementById("input-blur");
-const grainInput = document.getElementById("input-grain");
-const tintInput = document.getElementById("input-tint");
+const blurInput = document.getElementById('input-blur');
+const grainInput = document.getElementById('input-grain');
+const tintInput = document.getElementById('input-tint');
 
 function updateAllPanels() {
   for (const p of panels) {
@@ -244,20 +234,16 @@ function updateAllPanels() {
   scene.markDirty();
 }
 
-blurInput.addEventListener("input", () => {
-  document.getElementById("value-blur").textContent = `${blurInput.value}px`;
+blurInput.addEventListener('input', () => {
+  document.getElementById('value-blur').textContent = `${blurInput.value}px`;
   updateAllPanels();
 });
-grainInput.addEventListener("input", () => {
-  document.getElementById("value-grain").textContent = (
-    Number(grainInput.value) / 100
-  ).toFixed(2);
+grainInput.addEventListener('input', () => {
+  document.getElementById('value-grain').textContent = (Number(grainInput.value) / 100).toFixed(2);
   updateAllPanels();
 });
-tintInput.addEventListener("input", () => {
-  document.getElementById("value-tint").textContent = (
-    Number(tintInput.value) / 100
-  ).toFixed(2);
+tintInput.addEventListener('input', () => {
+  document.getElementById('value-tint').textContent = (Number(tintInput.value) / 100).toFixed(2);
   updateAllPanels();
 });
 
@@ -273,5 +259,5 @@ observer.observe(app);
 
 scene.start();
 
-document.getElementById("hud").textContent =
-  "drag panels to rearrange · blur/grain/tint adjustable";
+document.getElementById('hud').textContent =
+  'drag panels to rearrange · blur/grain/tint adjustable';
