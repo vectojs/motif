@@ -1,7 +1,0 @@
-.agents/
-.astro/
-dist/
-node_modules/
-bun.lock
-public/no-ff-webgpu.js
-src/registry/generated-sources.ts
