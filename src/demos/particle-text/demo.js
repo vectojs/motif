@@ -206,7 +206,7 @@ function lerpColor(a, b, t) {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'always', // particles are perpetually integrating
+  // 'always' is Scene's default renderMode; particles are perpetually integrating.
   maxFPS: 60,
   // Without this, ComputeParticleEntity.hasPendingAnimations() correctly
   // reports "at rest" once the settled shape's velocity/distance-to-origin

@@ -18,7 +18,7 @@ Motif is a **hybrid**: an Astro DOM shell (nav, search, code panel, chrome) host
 ## 🛠️ Tooling & Standards
 
 - **Package manager**: Bun (`bun install`, `bun run dev`, `bun run build`).
-- **Formatter**: Prettier, strictly enforced. **Linter**: Oxlint (`oxlint --deny-warnings src`).
+- **Formatter**: **oxfmt**, strictly enforced (`bunx oxfmt --write <files>`, gated by `format:check`). Prettier is **not** the formatter here and is not a declared dependency — it only resolves transitively via `prettier-plugin-astro`, which is why `scripts/inline-sources.ts` calling `prettier --write` silently left the generated registry failing `format:check`. **Linter**: Oxlint (`oxlint --deny-warnings src`).
 - **TypeScript**: strict. Demos themselves are `.js` (they run untranspiled in the browser); the Astro shell/tooling is `.ts`/`.astro`.
 - **Gates**: `format:check`, `lint`, `check:registry` (every demo folder has an entry and vice-versa), `check:versions` (each demo's index.html importmap pins match the repo's declared `@vectojs/*` deps), `test`, `build`.
 
@@ -39,8 +39,9 @@ keep their canvases on the site's cream palette (`#f7f4ee` ground, coral
 2. Create `src/demos/<id>/meta.ts` exporting a `default: DemoMeta` (`title`, `description`, `category`, `tags`, `packages`, `order`) — one file per demo, so adding a demo never touches a file another demo's PR is also touching. Run `bun run inline:sources` to regenerate `src/registry/generated-meta.ts` (committed, like `generated-sources.ts`) and pick it up in `DEMOS`. Categories and their nav order live in `src/registry/types.ts` (`CATEGORIES`); the landing page, left nav, checker, and tests all read from it.
 3. Default to the 2D/CPU point backend; only set `pointBackend: 'webgl'` if the demo needs it, and tag it so the smoke test covers it. Add showcase-tier demos to the route list in `test/smoke.ts`.
 4. **`Scene.add` takes ONE entity** — `scene.add(...list)` silently drops all but the first in plain JS (see forge/findings.md 2026-07-18). Loop instead.
-5. Rich material surfaces (blur, radial gradients, composite masking, source-rect sampling) belong in offscreen canvases composed with raw Canvas2D; the entity then draws one `drawImage`. `IRenderer` stays the only thing touching the scene canvas.
-6. `bun run format:check && bun run lint && bun run check:registry && bun run check:versions && bun run test && bun run build` must all pass.
+5. **`renderMode` is a FIELD, not a `SceneOptions` key.** `new Scene(canvas, { renderMode: 'onDemand' })` is silently ignored — the option is dropped and the scene stays `'always'`, which then idles at core's 2fps auto-throttle instead of 0. Assign it after construction: `scene.renderMode = 'onDemand'`. Measured in Chrome 150 on 2026-08-01: all four `onDemand` demos had been painting a steady 2.00Hz forever. Verified by field assignment (0 paints in 4-5s idle, drag still repaints, then back to 0).
+6. Rich material surfaces (blur, radial gradients, composite masking, source-rect sampling) belong in offscreen canvases composed with raw Canvas2D; the entity then draws one `drawImage`. `IRenderer` stays the only thing touching the scene canvas.
+7. `bun run check && bun run check:registry && bun run check:versions && bun test && bun run build` must all pass. (`check` runs `format:check`, `lint` and `lint:md`.) For anything touching `renderMode`, `markDirty`, or an `update()` loop, also run `bun run test:smoke` — it drives real Chrome against esm.sh and is the only gate that catches a demo that loads but never paints.
 
 ---
 

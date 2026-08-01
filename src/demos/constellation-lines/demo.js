@@ -203,7 +203,7 @@ class LinkLines extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'always', // points drift continuously
+  // 'always' is Scene's default renderMode; points drift continuously.
   maxFPS: 60,
   disableWindowResize: true,
   // Capped at 1 CSS pixel per canvas pixel, not the display's native DPR.

@@ -173,11 +173,14 @@ class GlitchText extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'onDemand',
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
 });
+// renderMode is a FIELD, not a SceneOptions key — passing it to the constructor
+// is silently ignored and leaves the scene in 'always', which then idles at
+// core's 2fps auto-throttle instead of 0.
+scene.renderMode = 'onDemand';
 
 const title = new GlitchText(TEXT);
 scene.add(title);

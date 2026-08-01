@@ -165,11 +165,18 @@ const app = document.getElementById('app');
 const canvas = document.getElementById('canvas');
 
 const scene = new Scene(canvas, {
-  renderMode: 'always',
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
 });
+// Nothing here animates: no entity has an update(), and the panels only move
+// when dragged. Every mutation marks the scene dirty, and scene.resize() marks
+// it internally, so 'always' would just redraw an unchanged frame forever.
+//
+// renderMode is a FIELD, not a SceneOptions key. Passing it to the constructor
+// is silently ignored — measured in Chrome 150, that left this scene painting a
+// steady 2.00Hz (core's idle auto-throttle for 'always') instead of 0.
+scene.renderMode = 'onDemand';
 
 scene.add(new GradientBg());
 
@@ -203,6 +210,9 @@ canvas.addEventListener('pointerdown', (e) => {
       scene.add(p);
       panels.splice(i, 1);
       panels.push(p);
+      // Raising the grabbed panel changes what is drawn on top, so the scene
+      // has to repaint even though nothing moved yet.
+      scene.markDirty();
       break;
     }
   }

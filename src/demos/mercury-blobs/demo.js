@@ -260,7 +260,7 @@ class GooLayer extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'always', // blobs drift continuously
+  // 'always' is Scene's default renderMode; blobs drift continuously.
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,

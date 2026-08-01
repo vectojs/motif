@@ -177,11 +177,15 @@ class JellyButton extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'onDemand', // hasPendingAnimations() wakes it while wobbling
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
 });
+// renderMode is a FIELD, not a SceneOptions key — passing it to the constructor
+// is silently ignored and leaves the scene in 'always', which then idles at
+// core's 2fps auto-throttle instead of 0. hasPendingAnimations() wakes this
+// scene while the jellies wobble, so onDemand is safe.
+scene.renderMode = 'onDemand';
 
 const jellies = [
   new JellyButton('poke', '#d97757', 74),

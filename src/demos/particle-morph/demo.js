@@ -200,7 +200,7 @@ const canvas = document.getElementById('canvas');
 const hud = document.getElementById('hud');
 
 const scene = new Scene(canvas, {
-  renderMode: 'always',
+  // 'always' is Scene's default renderMode; particles integrate continuously.
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,

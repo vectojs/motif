@@ -139,7 +139,7 @@ const glowColorInput = document.getElementById('input-glow-color');
 const coreColorInput = document.getElementById('input-core-color');
 
 const scene = new Scene(canvas, {
-  renderMode: 'always',
+  // 'always' is Scene's default renderMode; the bloom animates continuously.
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,

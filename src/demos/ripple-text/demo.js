@@ -86,7 +86,7 @@ const colorAInput = document.getElementById('input-color-a');
 const colorBInput = document.getElementById('input-color-b');
 
 const scene = new Scene(canvas, {
-  renderMode: 'always',
+  // 'always' is Scene's default renderMode; the ripple animates continuously.
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,

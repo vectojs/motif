@@ -267,7 +267,7 @@ class GlassCard extends Entity {
 }
 
 const scene = new Scene(canvas, {
-  renderMode: 'always', // the wallpaper drifts continuously
+  // 'always' is Scene's default renderMode; the wallpaper drifts continuously.
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
