@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, type IRenderer, type VectoJSEvent } from '@vectojs/core';
 
 // Jelly buttons: each blob's outline is a ring of mass-spring points around a
 // rest circle. Poke it and the impulse travels around the rim; neighboring
@@ -7,8 +7,8 @@ import { Scene, Entity } from '@vectojs/core';
 // isPointInside() hit-tests the DEFORMED outline (not a box), and
 // hasPendingAnimations() keeps the scene awake exactly while there is motion.
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
 const MUTED = '#8a8073';
 
@@ -17,13 +17,26 @@ const STIFFNESS = 130; // pull toward each point's rest radius
 const NEIGHBOR = 60; // shear coupling between adjacent points
 const DAMPING = 8.5;
 
-function hexToRGBA(hex, alpha) {
+function hexToRGBA(hex: string, alpha: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+interface RingPoint {
+  x: number;
+  y: number;
+}
+
 class JellyButton extends Entity {
-  constructor(label, color, radius) {
+  label: string;
+  color: string;
+  baseRadius: number;
+  pokes = 0;
+  offset: Float32Array;
+  velocity: Float32Array;
+  pts: RingPoint[] = []; // current outline, rebuilt each update
+
+  constructor(label: string, color: string, radius: number) {
     super(`Jelly:${label}`);
     this.label = label;
     this.color = color;
@@ -31,23 +44,21 @@ class JellyButton extends Entity {
     this.width = radius * 2;
     this.height = radius * 2;
     this.interactive = true;
-    this.pokes = 0;
     // Ring state: radial offset + velocity per perimeter point.
     this.offset = new Float32Array(POINTS);
     this.velocity = new Float32Array(POINTS);
-    this.pts = []; // current outline, rebuilt each update
     for (let i = 0; i < POINTS; i++) this.pts.push({ x: 0, y: 0 });
     this.rebuildOutline();
 
-    this.on('pointerdown', (e) => {
-      this.poke(e.localX, e.localY);
+    this.on('pointerdown', (e: VectoJSEvent) => {
+      this.poke(e.localX ?? this.baseRadius, e.localY ?? this.baseRadius);
       this.pokes += 1;
     });
   }
 
   // Radial impulse, strongest at the rim point nearest the hit, falling off
   // around the ring — this is what makes the wobble travel.
-  poke(lx, ly) {
+  poke(lx: number, ly: number) {
     const angle = Math.atan2(ly - this.baseRadius, lx - this.baseRadius);
     for (let i = 0; i < POINTS; i++) {
       const a = (i / POINTS) * Math.PI * 2;
@@ -61,14 +72,14 @@ class JellyButton extends Entity {
     this.scene?.markDirty();
   }
 
-  hasPendingAnimations() {
+  override hasPendingAnimations() {
     for (let i = 0; i < POINTS; i++) {
       if (Math.abs(this.offset[i]) > 0.05 || Math.abs(this.velocity[i]) > 0.05) return true;
     }
     return super.hasPendingAnimations();
   }
 
-  update(dt, time) {
+  override update(dt: number, time: number) {
     super.update(dt, time);
     const step = Math.min(dt, 32) / 1000;
     const { offset, velocity } = this;
@@ -95,7 +106,7 @@ class JellyButton extends Entity {
 
   // Hit-test the deformed outline: ray-cast in LOCAL space against the
   // current polygon, so a dented jelly really has a dented hit area.
-  isPointInside(gx, gy) {
+  override isPointInside(gx: number, gy: number) {
     const p = this.worldToLocal(gx, gy);
     if (!p) return false;
     let inside = false;
@@ -110,7 +121,7 @@ class JellyButton extends Entity {
 
   // Closed Catmull-Rom through the ring, emitted as cubic beziers — the
   // standard smooth-through-points conversion (tension 1/6).
-  tracePath(r) {
+  tracePath(r: IRenderer) {
     const pts = this.pts;
     r.beginPath();
     r.moveTo(pts[0].x, pts[0].y);
@@ -131,7 +142,7 @@ class JellyButton extends Entity {
     r.closePath();
   }
 
-  render(r) {
+  render(r: IRenderer) {
     const d = this.baseRadius * 2;
     // Body: translucent top → dense bottom, like light through gelatin.
     const body = r.createLinearGradient(0, 0, 0, d, [
@@ -198,7 +209,7 @@ class Caption extends Entity {
   isPointInside() {
     return false;
   }
-  render(r) {
+  render(r: IRenderer) {
     r.fillText(
       'Mass-spring rims · hit-testing follows the deformed outline',
       0,

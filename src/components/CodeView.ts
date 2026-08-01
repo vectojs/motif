@@ -72,7 +72,9 @@ function initCodeView(): void {
           doc: code,
           extensions: [
             lineNumbers(),
-            kind === 'module' ? javascript() : html(),
+            // Demos are authored in TypeScript; the panel shows that source,
+            // not the compiled JS actually served (see AGENTS.md).
+            kind === 'module' ? javascript({ typescript: true }) : html(),
             motifLight,
             syntaxHighlighting(motifHighlight),
             EditorState.readOnly.of(true),

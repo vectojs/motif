@@ -10,12 +10,12 @@ import { Scene, Entity, ComputeParticleEntity } from '@vectojs/core';
 // entirely on a throttled/skipped tick — so a probe entity's own update()
 // calls are a direct measurement of frames Scene actually rendered.
 class FrameProbe extends Entity {
-  frameTimes = [];
+  frameTimes: number[] = [];
   isPointInside() {
     return false;
   }
   render() {}
-  update(dt) {
+  update(dt: number) {
     const prevAvg = this.avgFrameTime();
     this.frameTimes.push(dt);
     // When a frame arrives dramatically faster than the running average
@@ -60,22 +60,22 @@ class FrameProbe extends Entity {
 // particle cloud kept triggering the browser's native text-selection drag
 // instead of reaching the canvas underneath.
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const hud = document.getElementById('hud');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const hud = document.getElementById('hud')!;
 const panel = {
-  origin: document.getElementById('input-origin'),
-  target: document.getElementById('input-target'),
-  transform: document.getElementById('btn-transform'),
-  count: document.getElementById('input-count'),
-  countValue: document.getElementById('value-count'),
-  duration: document.getElementById('input-duration'),
-  durationValue: document.getElementById('value-duration'),
-  colorA: document.getElementById('input-color-a'),
-  colorB: document.getElementById('input-color-b'),
+  origin: document.getElementById('input-origin') as HTMLInputElement,
+  target: document.getElementById('input-target') as HTMLInputElement,
+  transform: document.getElementById('btn-transform') as HTMLButtonElement,
+  count: document.getElementById('input-count') as HTMLInputElement,
+  countValue: document.getElementById('value-count')!,
+  duration: document.getElementById('input-duration') as HTMLInputElement,
+  durationValue: document.getElementById('value-duration')!,
+  colorA: document.getElementById('input-color-a') as HTMLInputElement,
+  colorB: document.getElementById('input-color-b') as HTMLInputElement,
 };
 
-const BUCKET_COUNT = 8;
+const BUCKET_COUNT: number = 8;
 const SAMPLE_CANVAS_H = 220;
 // duration slider is in 0.1s steps (3..30 -> 0.3s..3.0s). Spring stiffness
 // is tuned inversely against the selected duration below — the actual
@@ -107,10 +107,14 @@ const DAMPING = 0.828;
 // Rasterize `text` and return up to `maxPoints` (x, y) samples of its
 // opaque pixels, in the rasterizing canvas's own pixel space, along with the
 // tight bounding box of those samples (so the caller can re-center them).
-function sampleTextPoints(text, fontPx, maxPoints) {
+function sampleTextPoints(
+  text: string,
+  fontPx: number,
+  maxPoints: number,
+): { points: Float32Array; width: number; height: number } {
   const safeText = text.trim() || ' ';
   const probe = document.createElement('canvas');
-  const pctx = probe.getContext('2d');
+  const pctx = probe.getContext('2d')!;
   const font = `900 ${fontPx}px "Inter", system-ui, sans-serif`;
   pctx.font = font;
   const width = Math.ceil(pctx.measureText(safeText).width) + 40;
@@ -122,7 +126,7 @@ function sampleTextPoints(text, fontPx, maxPoints) {
   pctx.fillText(safeText, 20, SAMPLE_CANVAS_H / 2);
 
   const { data } = pctx.getImageData(0, 0, width, SAMPLE_CANVAS_H);
-  const candidates = [];
+  const candidates: number[] = [];
   // Grid step tuned so a typical word's opaque-pixel count lands near
   // maxPoints; oversample slightly then subsample evenly below, rather than
   // under-filling the particle budget on short words.
@@ -169,15 +173,16 @@ function sampleTextPoints(text, fontPx, maxPoints) {
 // readers the actual word — independent of however scattered the particle
 // cloud currently is.
 class Word extends Entity {
+  text = '';
+
   constructor() {
     super('Word');
-    this.text = '';
   }
   isPointInside() {
     return false;
   }
   render() {}
-  getContentProjection() {
+  override getContentProjection() {
     return {
       text: this.text,
       font: '900 64px "Inter", system-ui, sans-serif',
@@ -192,11 +197,11 @@ class Word extends Entity {
   }
 }
 
-function hexToRgb(hex) {
+function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-function lerpColor(a, b, t) {
+function lerpColor(a: string, b: string, t: number): string {
   const [ar, ag, ab] = hexToRgb(a);
   const [br, bg, bb] = hexToRgb(b);
   const r = Math.round(ar + (br - ar) * t);
@@ -226,16 +231,16 @@ const scene = new Scene(canvas, {
 // One ComputeParticleEntity per gradient bucket. Sizes/colors are fixed at
 // construction (maxParticles per bucket is recomputed and entities rebuilt
 // whenever the particle-count slider changes — see rebuildBuckets()).
-let buckets = [];
-let word = null;
-let frameProbe = null;
+let buckets: ComputeParticleEntity[] = [];
+let word: Word | null = null;
+let frameProbe: FrameProbe | null = null;
 
-function currentSpringK() {
+function currentSpringK(): number {
   const durationS = Number(panel.duration.value) / 10;
   return REFERENCE_SPRING_K * (REFERENCE_DURATION_S / durationS);
 }
 
-function rebuildBuckets(totalParticles) {
+function rebuildBuckets(totalParticles: number) {
   for (const b of buckets) scene.remove(b);
   buckets = [];
   const perBucket = Math.max(1, Math.round(totalParticles / BUCKET_COUNT));
@@ -261,9 +266,9 @@ function rebuildBuckets(totalParticles) {
 // Splits a word's sampled point cloud evenly across BUCKET_COUNT slices by
 // HORIZONTAL position (left-to-right), so the gradient reads left-to-right
 // across the word rather than randomly speckled.
-function bucketizePoints(points, width) {
+function bucketizePoints(points: Float32Array, width: number): Float32Array[] {
   const n = points.length / 2;
-  const perBucketPoints = Array.from({ length: BUCKET_COUNT }, () => []);
+  const perBucketPoints: number[][] = Array.from({ length: BUCKET_COUNT }, () => []);
   for (let i = 0; i < n; i++) {
     const x = points[i * 2];
     const y = points[i * 2 + 1];
@@ -277,9 +282,10 @@ function bucketizePoints(points, width) {
 let fontPx = 120;
 let seeded = false;
 
-function layoutWord(text, resetPositions) {
-  const totalParticles = buckets.reduce((s, b) => s + b.maxParticles, 0);
+function layoutWord(text: string, resetPositions: boolean) {
+  if (!word) return;
   word.text = text;
+  const totalParticles = buckets.reduce((s, b) => s + b.maxParticles, 0);
   const { points, width, height } = sampleTextPoints(text, fontPx, totalParticles);
   const w = app.clientWidth || 900;
   const h = app.clientHeight || 500;

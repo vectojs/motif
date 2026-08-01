@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, CanvasRenderer } from '@vectojs/core';
 
 class BloomPipeline extends Entity {
   brightCanvas = document.createElement('canvas');
@@ -10,8 +10,10 @@ class BloomPipeline extends Entity {
   coreColor = '#ffffff';
   mouseX = -1;
   mouseY = -1;
-  w = 0;
-  h = 0;
+  private _w = 0;
+  private _h = 0;
+  private _blurW = 0;
+  private _blurH = 0;
 
   isPointInside() {
     return false;
@@ -20,11 +22,11 @@ class BloomPipeline extends Entity {
     return true;
   }
 
-  update(dt) {
+  update(dt: number) {
     this.time += dt;
   }
 
-  render(r) {
+  render(r: CanvasRenderer) {
     const W = this.scene.width;
     const H = this.scene.height;
     if (W === 0 || H === 0) return;
@@ -44,11 +46,11 @@ class BloomPipeline extends Entity {
       this.bloomCanvas.height = blurH;
     }
 
-    const bc = this.brightCanvas.getContext('2d');
+    const bc = this.brightCanvas.getContext('2d')!;
     bc.clearRect(0, 0, W, H);
     this.drawBrightContent(bc, W, H, this.time * 0.001);
 
-    const blc = this.bloomCanvas.getContext('2d');
+    const blc = this.bloomCanvas.getContext('2d')!;
     blc.clearRect(0, 0, blurW, blurH);
     blc.filter = `blur(${this.blurRadius}px)`;
     blc.drawImage(this.brightCanvas, 0, 0, blurW, blurH);
@@ -74,7 +76,7 @@ class BloomPipeline extends Entity {
     r.restore();
   }
 
-  drawBrightContent(ctx, W, H, t) {
+  drawBrightContent(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
     ctx.save();
     const cx = W / 2;
     const cy = H / 2;
@@ -135,12 +137,12 @@ class BloomPipeline extends Entity {
   }
 }
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const blurInput = document.getElementById('input-blur');
-const intenseInput = document.getElementById('input-intense');
-const glowColorInput = document.getElementById('input-glow-color');
-const coreColorInput = document.getElementById('input-core-color');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const blurInput = document.getElementById('input-blur') as HTMLInputElement;
+const intenseInput = document.getElementById('input-intense') as HTMLInputElement;
+const glowColorInput = document.getElementById('input-glow-color') as HTMLInputElement;
+const coreColorInput = document.getElementById('input-core-color') as HTMLInputElement;
 
 const scene = new Scene(canvas, {
   // 'always' is Scene's default renderMode; the bloom animates continuously.
@@ -155,11 +157,11 @@ scene.start();
 
 blurInput.addEventListener('input', () => {
   bloom.blurRadius = Number(blurInput.value);
-  document.getElementById('value-blur').textContent = `${bloom.blurRadius}px`;
+  document.getElementById('value-blur')!.textContent = `${bloom.blurRadius}px`;
 });
 intenseInput.addEventListener('input', () => {
   bloom.intensity = Number(intenseInput.value) / 20;
-  document.getElementById('value-intense').textContent = bloom.intensity.toFixed(1);
+  document.getElementById('value-intense')!.textContent = bloom.intensity.toFixed(1);
 });
 glowColorInput.addEventListener('input', () => {
   bloom.glowColor = glowColorInput.value;
@@ -185,6 +187,6 @@ const observer = new ResizeObserver(() => {
 });
 observer.observe(app);
 
-document.getElementById('hud').textContent =
+document.getElementById('hud')!.textContent =
   `bloom ${bloom.blurRadius}px · intensity ${bloom.intensity.toFixed(1)}\n` +
   `move mouse to paint glow`;

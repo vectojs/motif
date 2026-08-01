@@ -2,7 +2,7 @@ import { Scene, Entity, ComputeParticleEntity } from '@vectojs/core';
 
 /* ---- shape samplers (filled interior with perimeter bias) ---- */
 
-function sampleCircle(cx, cy, r, n) {
+function sampleCircle(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const a = ((i + Math.random() * 0.5) / n) * Math.PI * 2;
@@ -13,11 +13,11 @@ function sampleCircle(cx, cy, r, n) {
   return pts;
 }
 
-function starRad(a, r) {
+function starRad(a: number, r: number): number {
   return r * (0.675 + 0.325 * Math.cos(5 * (a + Math.PI / 2)));
 }
 
-function sampleStar(cx, cy, r, n) {
+function sampleStar(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const a = ((i + Math.random() * 0.5) / n) * Math.PI * 2;
@@ -28,7 +28,7 @@ function sampleStar(cx, cy, r, n) {
   return pts;
 }
 
-function sampleHexagon(cx, cy, r, n) {
+function sampleHexagon(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const a = ((i + Math.random() * 0.5) / n) * Math.PI * 2;
@@ -41,7 +41,7 @@ function sampleHexagon(cx, cy, r, n) {
   return pts;
 }
 
-function sampleDiamond(cx, cy, r, n) {
+function sampleDiamond(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const t = (i + Math.random() * 0.5) / n;
@@ -54,7 +54,7 @@ function sampleDiamond(cx, cy, r, n) {
   return pts;
 }
 
-function sampleHeart(cx, cy, r, n) {
+function sampleHeart(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const a = ((i + Math.random() * 0.5) / n) * Math.PI * 2;
@@ -67,7 +67,7 @@ function sampleHeart(cx, cy, r, n) {
   return pts;
 }
 
-function sampleSpiral(cx, cy, r, n) {
+function sampleSpiral(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const t = (i + Math.random() * 0.5) / n;
@@ -79,7 +79,7 @@ function sampleSpiral(cx, cy, r, n) {
   return pts;
 }
 
-function sampleTriangle(cx, cy, r, n) {
+function sampleTriangle(cx: number, cy: number, r: number, n: number): Float32Array {
   const pts = new Float32Array(n * 2);
   for (let i = 0; i < n; i++) {
     const a = ((i + Math.random() * 0.5) / n) * Math.PI * 2 + Math.PI / 2;
@@ -94,7 +94,9 @@ function sampleTriangle(cx, cy, r, n) {
 
 /* ---- end shape samplers ---- */
 
-const SHAPES = [
+type ShapeFn = (cx: number, cy: number, r: number, n: number) => Float32Array;
+
+const SHAPES: { name: string; fn: ShapeFn }[] = [
   { name: 'Circle', fn: sampleCircle },
   { name: 'Star', fn: sampleStar },
   { name: 'Hexagon', fn: sampleHexagon },
@@ -104,10 +106,12 @@ const SHAPES = [
   { name: 'Triangle', fn: sampleTriangle },
 ];
 
+type MorphState = 'display' | 'explode' | 'morph';
+
 class MorphController extends Entity {
-  bucket = null;
+  bucket: ComputeParticleEntity | null = null;
   shapeIdx = 0;
-  state = 'display'; // display → explode → morph → display
+  state: MorphState = 'display'; // display → explode → morph → display
   timer = 0;
   speed = 1;
   total = 1800;
@@ -120,7 +124,7 @@ class MorphController extends Entity {
   }
   render() {}
 
-  update(dt) {
+  update(dt: number) {
     this.timer += dt;
     const W = this.scene.width;
     const H = this.scene.height;
@@ -151,7 +155,7 @@ class MorphController extends Entity {
     }
   }
 
-  rebuild(count) {
+  rebuild(count: number) {
     this.total = count;
     const W = this.scene.width || 900;
     const H = this.scene.height || 500;
@@ -195,9 +199,12 @@ class MorphController extends Entity {
   }
 }
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const hud = document.getElementById('hud');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const hud = document.getElementById('hud')!;
+const inputCount = document.getElementById('input-count') as HTMLInputElement;
+const inputSpeed = document.getElementById('input-speed') as HTMLInputElement;
+const inputColor = document.getElementById('input-color') as HTMLInputElement;
 
 const scene = new Scene(canvas, {
   // 'always' is Scene's default renderMode; particles integrate continuously.
@@ -211,7 +218,7 @@ scene.add(controller);
 scene.start();
 
 function rebuildScene() {
-  const count = Number(document.getElementById('input-count').value);
+  const count = Number(inputCount.value);
   const W = app.clientWidth || 900;
   const H = app.clientHeight || 500;
   // Resize BEFORE rebuild: rebuild()'s shape geometry reads
@@ -223,20 +230,20 @@ function rebuildScene() {
   controller.rebuild(count);
 }
 
-document.getElementById('input-count').addEventListener('input', () => {
-  document.getElementById('value-count').textContent = document.getElementById('input-count').value;
+inputCount.addEventListener('input', () => {
+  document.getElementById('value-count')!.textContent = inputCount.value;
 });
-document.getElementById('input-count').addEventListener('change', rebuildScene);
+inputCount.addEventListener('change', rebuildScene);
 
-document.getElementById('input-speed').addEventListener('input', () => {
-  controller.speed = Number(document.getElementById('input-speed').value) / 5;
-  document.getElementById('value-speed').textContent = controller.speed.toFixed(1);
+inputSpeed.addEventListener('input', () => {
+  controller.speed = Number(inputSpeed.value) / 5;
+  document.getElementById('value-speed')!.textContent = controller.speed.toFixed(1);
   scene.markDirty();
 });
 
-document.getElementById('input-color').addEventListener('input', () => {
+inputColor.addEventListener('input', () => {
   if (controller.bucket) {
-    controller.bucket.baseColor = document.getElementById('input-color').value;
+    controller.bucket.baseColor = inputColor.value;
     scene.markDirty();
   }
 });
@@ -258,7 +265,9 @@ rebuildScene();
 
 function updateHud() {
   const shapeName = SHAPES[controller.shapeIdx].name;
-  const stateIcon = { display: '◉', explode: '✦', morph: '◈' }[controller.state] || '●';
+  const stateIcon =
+    ({ display: '◉', explode: '✦', morph: '◈' } as Record<MorphState, string>)[controller.state] ||
+    '●';
   hud.textContent =
     `${controller.total} particles · ${shapeName} ${stateIcon}\n` +
     `auto-cycling every ${(3.5 / controller.speed).toFixed(1)}s · speed ${controller.speed.toFixed(1)}`;

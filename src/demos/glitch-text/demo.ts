@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, CanvasRenderer } from '@vectojs/core';
 
 // Glitch text, light-theme edition: instead of RGB-split-on-black, the burst
 // reads as a misregistered PRINT — coral and teal plates slipping out of
@@ -8,8 +8,8 @@ import { Scene, Entity } from '@vectojs/core';
 // entity draws. Between bursts the scene is fully idle (onDemand): a timer
 // arms the burst and hasPendingAnimations() carries it while it runs.
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
 const TEXT = 'MOTIF';
 const INK = '#2a2723';
@@ -21,27 +21,36 @@ const BURST_MS = 420;
 const CALM_MIN_MS = 1400;
 const CALM_VAR_MS = 1800;
 
+interface Plates {
+  ink: HTMLCanvasElement;
+  coral: HTMLCanvasElement;
+  teal: HTMLCanvasElement;
+}
+
 class GlitchText extends Entity {
-  constructor(text) {
+  text: string;
+  fontSize = 120;
+  pad = 24; // sprite margin so slipped plates never clip
+  plates: Plates | null = null;
+  frame = document.createElement('canvas');
+  fctx: CanvasRenderingContext2D;
+  burstUntil = 0;
+  armed = 0;
+
+  constructor(text: string) {
     super('GlitchText');
     this.text = text;
-    this.fontSize = 120;
-    this.pad = 24; // sprite margin so slipped plates never clip
     this.interactive = true;
-    this.plates = null; // { ink, coral, teal } offscreen sprites
-    this.frame = document.createElement('canvas');
-    this.fctx = this.frame.getContext('2d');
-    this.burstUntil = 0;
-    this.armed = 0;
+    this.fctx = this.frame.getContext('2d')!;
   }
 
   // Bake the ink plate, then tint copies via source-in — one text raster,
   // three registration plates.
-  bake(fontSize) {
+  bake(fontSize: number) {
     this.fontSize = fontSize;
     const s = SPRITE_SCALE;
     const font = `900 ${fontSize}px "Inter", system-ui, sans-serif`;
-    const probe = document.createElement('canvas').getContext('2d');
+    const probe = document.createElement('canvas').getContext('2d')!;
     probe.font = font;
     const metrics = probe.measureText(this.text);
     const w = Math.ceil(metrics.width) + this.pad * 2;
@@ -51,11 +60,11 @@ class GlitchText extends Entity {
     this.frame.width = w * s;
     this.frame.height = h * s;
 
-    const bakePlate = (color) => {
+    const bakePlate = (color: string): HTMLCanvasElement => {
       const c = document.createElement('canvas');
       c.width = w * s;
       c.height = h * s;
-      const ctx = c.getContext('2d');
+      const ctx = c.getContext('2d')!;
       ctx.scale(s, s);
       ctx.font = font;
       ctx.textBaseline = 'top';
@@ -84,11 +93,11 @@ class GlitchText extends Entity {
   }
 
   // The scene sleeps between bursts; this keeps it rendering during one.
-  hasPendingAnimations() {
+  override hasPendingAnimations() {
     return performance.now() < this.burstUntil || super.hasPendingAnimations();
   }
 
-  destroy() {
+  override destroy() {
     window.clearTimeout(this.armed);
     super.destroy();
   }
@@ -97,6 +106,7 @@ class GlitchText extends Entity {
   // plates SNAP apart and settle back into register.
   composeGlitch() {
     const { fctx, plates } = this;
+    if (!plates) return;
     const s = SPRITE_SCALE;
     const w = this.width * s;
     const h = this.height * s;
@@ -144,12 +154,12 @@ class GlitchText extends Entity {
     fctx.globalCompositeOperation = 'source-over';
   }
 
-  isPointInside(gx, gy) {
+  override isPointInside(gx: number, gy: number) {
     const p = this.worldToLocal(gx, gy);
     return !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height;
   }
 
-  render(r) {
+  render(r: CanvasRenderer) {
     if (!this.plates) return;
     if (performance.now() < this.burstUntil) {
       this.composeGlitch();
@@ -161,7 +171,7 @@ class GlitchText extends Entity {
 
   // Even mid-glitch, the headline stays real text to the a11y tree, search,
   // and screen readers — the projection mirrors the string, not the pixels.
-  getContentProjection() {
+  override getContentProjection() {
     return {
       text: this.text,
       font: `900 ${this.fontSize}px "Inter", system-ui, sans-serif`,
@@ -189,7 +199,7 @@ class Caption extends Entity {
   isPointInside() {
     return false;
   }
-  render(r) {
+  render(r: CanvasRenderer) {
     r.fillText(
       'Misregistered print plates · click the headline to slip the press',
       0,

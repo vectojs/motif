@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, type IRenderer, type VectoJSEvent } from '@vectojs/core';
 
 // Mercury blobs: draggable circles that visually MERGE into one shape when
 // close and split apart when pulled away — the classic "goo" trick, not a
@@ -21,12 +21,12 @@ import { Scene, Entity } from '@vectojs/core';
 // entirely on a throttled/skipped tick — so a probe entity's own update()
 // calls are a direct measurement of frames Scene actually rendered.
 class FrameProbe extends Entity {
-  frameTimes = [];
+  frameTimes: number[] = [];
   isPointInside() {
     return false;
   }
   render() {}
-  update(dt) {
+  update(dt: number) {
     this.frameTimes.push(dt);
     // A window this small (~330ms at 60fps) still smooths ordinary
     // frame-to-frame noise, but doesn't let the average lag behind a real
@@ -42,9 +42,9 @@ class FrameProbe extends Entity {
   }
 }
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const hud = document.getElementById('hud');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const hud = document.getElementById('hud')!;
 
 const SILVER = '#b9c2c9';
 const SILVER_DARK = '#7d868c';
@@ -68,7 +68,13 @@ const SILVER_DARK = '#7d868c';
 const BUF_SCALE = 0.5;
 
 class Blob extends Entity {
-  constructor(radius) {
+  radius: number;
+  vx: number;
+  vy: number;
+  dragging = false;
+  private _a11yRoundPatched = false;
+
+  constructor(radius: number) {
     super();
     this.radius = radius;
     // width/height define the a11y shadow element's DOM box (Scene.syncA11y
@@ -81,10 +87,9 @@ class Blob extends Entity {
     this.vx = (Math.random() - 0.5) * 24;
     this.vy = (Math.random() - 0.5) * 24;
     this.interactive = true;
-    this._a11yRoundPatched = false;
   }
 
-  isPointInside(gx, gy) {
+  override isPointInside(gx: number, gy: number) {
     const p = this.worldToLocal(gx, gy);
     if (!p) return false;
     const dx = p.x - this.radius;
@@ -97,11 +102,11 @@ class Blob extends Entity {
   // motion in flight, so the renderMode:'always' auto-throttle drops the
   // whole demo to ~2fps despite blobs visibly moving. Same root cause as
   // Constellation Lines' Point class (found in the same investigation).
-  hasPendingAnimations() {
+  override hasPendingAnimations() {
     return true;
   }
 
-  update(dt) {
+  override update(dt: number) {
     // The a11y shadow element Scene projects for hit-testing/hover is a
     // RECTANGLE sized from width/height (entity.x,y to entity.x+width,
     // y+height) — the full bounding square of this circle, not the circle
@@ -157,24 +162,28 @@ class Blob extends Entity {
 // and reads live blob.x/y/radius each frame, so blob drag updates (handled
 // by pointer listeners below, not by this entity) are reflected immediately.
 class GooLayer extends Entity {
-  constructor(blobs) {
+  blobs: Blob[];
+  buffer = document.createElement('canvas');
+  ctx: CanvasRenderingContext2D;
+  // Contrast pass output: a SEPARATE canvas, not the same buffer drawn
+  // onto itself. Measured directly: ctx.drawImage(buffer, ...) where
+  // buffer is ctx's OWN canvas, with an active ctx.filter, cost ~27ms per
+  // frame (nearly the entire 60fps budget) even at BUF_SCALE 1 — drawing
+  // a canvas onto itself with a filter active appears to block whatever
+  // fast compositing path the browser would otherwise take, forcing a
+  // full software re-rasterization. Drawing into a distinct destination
+  // canvas instead dropped that same pass to well under 1ms.
+  contrastBuffer = document.createElement('canvas');
+  contrastCtx: CanvasRenderingContext2D;
+
+  constructor(blobs: Blob[]) {
     super('GooLayer');
     this.blobs = blobs;
-    this.buffer = document.createElement('canvas');
-    this.ctx = this.buffer.getContext('2d');
-    // Contrast pass output: a SEPARATE canvas, not the same buffer drawn
-    // onto itself. Measured directly: ctx.drawImage(buffer, ...) where
-    // buffer is ctx's OWN canvas, with an active ctx.filter, cost ~27ms per
-    // frame (nearly the entire 60fps budget) even at BUF_SCALE 1 — drawing
-    // a canvas onto itself with a filter active appears to block whatever
-    // fast compositing path the browser would otherwise take, forcing a
-    // full software re-rasterization. Drawing into a distinct destination
-    // canvas instead dropped that same pass to well under 1ms.
-    this.contrastBuffer = document.createElement('canvas');
-    this.contrastCtx = this.contrastBuffer.getContext('2d');
+    this.ctx = this.buffer.getContext('2d')!;
+    this.contrastCtx = this.contrastBuffer.getContext('2d')!;
   }
 
-  resize(width, height) {
+  resize(width: number, height: number) {
     this.width = width;
     this.height = height;
     const bw = Math.max(1, Math.round(width * BUF_SCALE));
@@ -189,7 +198,7 @@ class GooLayer extends Entity {
     return false;
   }
 
-  render(r) {
+  render(r: IRenderer) {
     const { ctx, buffer, contrastCtx, contrastBuffer } = this;
     if (buffer.width <= 1) return;
     const s = BUF_SCALE;
@@ -269,27 +278,27 @@ const scene = new Scene(canvas, {
 const frameProbe = new FrameProbe();
 scene.add(frameProbe);
 
-let blobs = [];
-let goo = null;
+let blobs: Blob[] = [];
+let goo: GooLayer | null = null;
 
 // --- Drag: window-level pointermove so a fast drag that outruns the blob
 // still tracks (same pattern as Liquid Glass's card drag). Shared across
 // spawnBlobs() calls (button clicks respawn an entirely new blob array) so
 // there is exactly one place wiring pointerdown, not two copies that could
 // drift apart.
-let grabbed = null;
+let grabbed: Blob | null = null;
 let grabDX = 0;
 let grabDY = 0;
-function wireDrag(b) {
-  b.on('pointerdown', (e) => {
+function wireDrag(b: Blob) {
+  b.on('pointerdown', (e: VectoJSEvent) => {
     grabbed = b;
     b.dragging = true;
-    grabDX = e.sceneX - b.x;
-    grabDY = e.sceneY - b.y;
+    grabDX = (e.sceneX ?? b.x) - b.x;
+    grabDY = (e.sceneY ?? b.y) - b.y;
   });
 }
 
-function spawnBlobs(count) {
+function spawnBlobs(count: number) {
   for (const b of blobs) scene.remove(b);
   if (goo) scene.remove(goo);
   grabbed = null;
@@ -361,11 +370,15 @@ window.addEventListener('pointerup', () => {
 });
 
 // --- Blob-count buttons ---
-const countButtons = { 'btn-count-3': 3, 'btn-count-6': 6, 'btn-count-12': 12 };
+const countButtons: Record<string, number> = {
+  'btn-count-3': 3,
+  'btn-count-6': 6,
+  'btn-count-12': 12,
+};
 for (const [id, count] of Object.entries(countButtons)) {
-  document.getElementById(id).addEventListener('click', () => {
+  document.getElementById(id)!.addEventListener('click', () => {
     for (const other of Object.keys(countButtons))
-      document.getElementById(other).setAttribute('aria-pressed', String(other === id));
+      document.getElementById(other)!.setAttribute('aria-pressed', String(other === id));
     spawnBlobs(count); // wires drag on the new blobs itself
   });
 }

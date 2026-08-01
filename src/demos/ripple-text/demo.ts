@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, CanvasRenderer } from '@vectojs/core';
 
 class RippleText extends Entity {
   text = 'RIPPLE';
@@ -17,11 +17,14 @@ class RippleText extends Entity {
     return true;
   }
 
-  update(dt) {
+  update(dt: number) {
     this.time += dt;
   }
 
-  render(r) {
+  // `render()`'s real signature is `render(renderer: any)` (Entity.d.ts) since
+  // it must accept whichever backend the Scene picked; CanvasRenderer is the
+  // one this demo actually assumes (it calls getContext() for raw Canvas2D).
+  render(r: CanvasRenderer) {
     const ctx = r.getContext();
     const chars = [...this.text];
     if (chars.length === 0) return;
@@ -65,25 +68,25 @@ class RippleText extends Entity {
   }
 }
 
-function lerpColor(a, b, t) {
+function lerpColor(a: string, b: string, t: number): string {
   const [ar, ag, ab] = hexToRgb(a);
   const [br, bg, bb] = hexToRgb(b);
   return `rgb(${Math.round(ar + (br - ar) * t)},${Math.round(ag + (bg - ag) * t)},${Math.round(ab + (bb - ab) * t)})`;
 }
-function hexToRgb(hex) {
+function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const hud = document.getElementById('hud');
-const textInput = document.getElementById('input-text');
-const freqInput = document.getElementById('input-freq');
-const ampInput = document.getElementById('input-amp');
-const speedInput = document.getElementById('input-speed');
-const colorAInput = document.getElementById('input-color-a');
-const colorBInput = document.getElementById('input-color-b');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const hud = document.getElementById('hud')!;
+const textInput = document.getElementById('input-text') as HTMLInputElement;
+const freqInput = document.getElementById('input-freq') as HTMLInputElement;
+const ampInput = document.getElementById('input-amp') as HTMLInputElement;
+const speedInput = document.getElementById('input-speed') as HTMLInputElement;
+const colorAInput = document.getElementById('input-color-a') as HTMLInputElement;
+const colorBInput = document.getElementById('input-color-b') as HTMLInputElement;
 
 const scene = new Scene(canvas, {
   // 'always' is Scene's default renderMode; the ripple animates continuously.
@@ -101,15 +104,15 @@ textInput.addEventListener('input', () => {
 });
 freqInput.addEventListener('input', () => {
   ripple.freq = Number(freqInput.value) / 100;
-  document.getElementById('value-freq').textContent = ripple.freq.toFixed(2);
+  document.getElementById('value-freq')!.textContent = ripple.freq.toFixed(2);
 });
 ampInput.addEventListener('input', () => {
   ripple.amplitude = Number(ampInput.value);
-  document.getElementById('value-amp').textContent = `${ripple.amplitude}px`;
+  document.getElementById('value-amp')!.textContent = `${ripple.amplitude}px`;
 });
 speedInput.addEventListener('input', () => {
   ripple.speed = Number(speedInput.value) / 10;
-  document.getElementById('value-speed').textContent = ripple.speed.toFixed(1);
+  document.getElementById('value-speed')!.textContent = ripple.speed.toFixed(1);
 });
 colorAInput.addEventListener('input', () => {
   ripple.colorA = colorAInput.value;

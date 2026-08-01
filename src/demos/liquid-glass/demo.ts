@@ -1,4 +1,4 @@
-import { Scene, Entity } from '@vectojs/core';
+import { Scene, Entity, type IRenderer, type VectoJSEvent } from '@vectojs/core';
 
 // Liquid glass: a draggable frosted card that REFRACTS the scene behind it.
 // IRenderer has no backdrop-filter, so the trick is layering:
@@ -10,8 +10,8 @@ import { Scene, Entity } from '@vectojs/core';
 // The engine drives everything else: the spring-lagged drag (setTransition),
 // pointer events, and the render loop.
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
 const CREAM = '#f7f4ee';
 const INK = '#2a2723';
@@ -32,21 +32,23 @@ const BLOBS = [
 const BUF_SCALE = Math.min(window.devicePixelRatio || 1, 2);
 
 class Wallpaper extends Entity {
+  buffer = document.createElement('canvas');
+  ctx: CanvasRenderingContext2D;
+  time = 0;
+
   constructor() {
     super('Wallpaper');
-    this.buffer = document.createElement('canvas');
-    this.ctx = this.buffer.getContext('2d');
-    this.time = 0;
+    this.ctx = this.buffer.getContext('2d')!;
   }
 
-  resize(width, height) {
+  resize(width: number, height: number) {
     this.width = width;
     this.height = height;
     this.buffer.width = Math.max(1, Math.round(width * BUF_SCALE));
     this.buffer.height = Math.max(1, Math.round(height * BUF_SCALE));
   }
 
-  update(dt) {
+  override update(dt: number) {
     this.time += dt / 1000;
     const { ctx, buffer } = this;
     ctx.setTransform(BUF_SCALE, 0, 0, BUF_SCALE, 0, 0);
@@ -75,37 +77,39 @@ class Wallpaper extends Entity {
     return false;
   }
 
-  render(r) {
+  render(r: IRenderer) {
     if (this.buffer.width > 1) r.drawImage(this.buffer, 0, 0, this.width, this.height);
   }
 }
 
 class GlassCard extends Entity {
-  constructor(wallpaper, width, height) {
+  wallpaper: Wallpaper;
+  radius = 26;
+  compose = document.createElement('canvas');
+  cctx: CanvasRenderingContext2D;
+  // The capsule on the glass is a REAL slider (0..1), not a static prop —
+  // a fixed-fill decoration painted a moving-looking knob without any
+  // drag logic behind it, reading as broken interactive UI. draggingSlider
+  // disambiguates "grabbed the knob" from "grabbed the card body" for the
+  // shared pointerdown/pointermove pair wired up below.
+  sliderValue = 0.62;
+  draggingSlider = false;
+
+  constructor(wallpaper: Wallpaper, width: number, height: number) {
     super('GlassCard');
     this.wallpaper = wallpaper;
     this.width = width;
     this.height = height;
-    this.radius = 26;
     this.interactive = true;
-    this.compose = document.createElement('canvas');
     this.compose.width = Math.round(width * BUF_SCALE);
     this.compose.height = Math.round(height * BUF_SCALE);
-    this.cctx = this.compose.getContext('2d');
+    this.cctx = this.compose.getContext('2d')!;
     // The liquid feel: position is spring-driven, so the card lags and
     // settles behind the pointer instead of teleporting with it.
     this.setTransition({
       x: { stiffness: 170, damping: 17 },
       y: { stiffness: 170, damping: 17 },
     });
-
-    // The capsule on the glass is a REAL slider (0..1), not a static prop —
-    // a fixed-fill decoration painted a moving-looking knob without any
-    // drag logic behind it, reading as broken interactive UI. draggingSlider
-    // disambiguates "grabbed the knob" from "grabbed the card body" for the
-    // shared pointerdown/pointermove pair wired up below.
-    this.sliderValue = 0.62;
-    this.draggingSlider = false;
   }
 
   // Local-space geometry the slider track occupies — shared by hit-testing,
@@ -115,7 +119,7 @@ class GlassCard extends Entity {
     return { x: 26, y: this.height - 58, w: trackW, h: 10 };
   }
 
-  isPointInside(gx, gy) {
+  override isPointInside(gx: number, gy: number) {
     const p = this.worldToLocal(gx, gy);
     return !!p && p.x >= 0 && p.x <= this.width && p.y >= 0 && p.y <= this.height;
   }
@@ -123,7 +127,7 @@ class GlassCard extends Entity {
   // Hit-test the knob specifically (a padded circle around its center), used
   // to decide whether a pointerdown starts a slider drag instead of a card
   // drag.
-  isPointOnKnob(gx, gy) {
+  isPointOnKnob(gx: number, gy: number) {
     const p = this.worldToLocal(gx, gy);
     if (!p) return false;
     const t = this.sliderTrackRect();
@@ -134,7 +138,7 @@ class GlassCard extends Entity {
     return dx * dx + dy * dy <= 14 * 14;
   }
 
-  setSliderFromLocalX(localX) {
+  setSliderFromLocalX(localX: number) {
     const t = this.sliderTrackRect();
     const v = (localX - t.x) / t.w;
     this.sliderValue = Math.max(0, Math.min(1, v));
@@ -214,7 +218,7 @@ class GlassCard extends Entity {
     cctx.globalCompositeOperation = 'source-over';
   }
 
-  render(r) {
+  render(r: IRenderer) {
     this.refract();
     const w = this.width;
     const h = this.height;
@@ -283,13 +287,16 @@ scene.add(card);
 // card (springs lag!) keeps working until release. A pointerdown ON THE KNOB
 // starts a slider drag instead of a card drag — checked first since the knob
 // sits inside the card's own hit area.
-let grab = null;
-card.on('pointerdown', (e) => {
+let grab: { dx: number; dy: number } | null = null;
+card.on('pointerdown', (e: VectoJSEvent) => {
   if (e.sceneX !== undefined && e.sceneY !== undefined && card.isPointOnKnob(e.sceneX, e.sceneY)) {
     card.draggingSlider = true;
     return;
   }
-  grab = { dx: e.sceneX - card.x, dy: e.sceneY - card.y };
+  grab = {
+    dx: (e.sceneX ?? card.x) - card.x,
+    dy: (e.sceneY ?? card.y) - card.y,
+  };
 });
 window.addEventListener('pointermove', (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -312,7 +319,7 @@ class Caption extends Entity {
   isPointInside() {
     return false;
   }
-  render(r) {
+  render(r: IRenderer) {
     r.fillText(
       'Backdrop refraction, composed live from the scene behind the card.',
       0,

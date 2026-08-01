@@ -11,6 +11,24 @@ export const GENERATED_META: Record<string, DemoMeta> = {
     packages: ['@vectojs/core'],
     order: 20,
   },
+  'constellation-lines': {
+    title: 'Constellation Lines',
+    description:
+      'Drifting points connect to nearby neighbors with distance-faded links — a live, switchable comparison of SpatialHashGrid neighbor queries against a naive O(n²) search, with real measured query time on screen.',
+    category: 'effects',
+    tags: ['particles', 'spatial-index', 'webgl'],
+    packages: ['@vectojs/core'],
+    order: 20,
+  },
+  'frosted-glass': {
+    title: 'Frosted Glass',
+    description:
+      'Draggable frosted-glass panels with adjustable blur, grain texture, and tilt — a translucent, etched-surface alternative to liquid glass',
+    category: 'materials',
+    tags: ['glass', 'frost', 'blur', 'grain'],
+    packages: ['@vectojs/core'],
+    order: 50,
+  },
   'glitch-text': {
     title: 'Glitch Text',
     description:
@@ -19,6 +37,15 @@ export const GENERATED_META: Record<string, DemoMeta> = {
     tags: ['type', 'distortion'],
     packages: ['@vectojs/core'],
     order: 10,
+  },
+  'glow-bloom': {
+    title: 'Glow Bloom',
+    description:
+      'Post-processing bloom effect — bright shapes bloom and bleed light into surrounding space with adjustable spread and intensity',
+    category: 'effects',
+    tags: ['bloom', 'glow', 'post-processing'],
+    packages: ['@vectojs/core'],
+    order: 60,
   },
   jelly: {
     title: 'Jelly Buttons',
@@ -38,39 +65,12 @@ export const GENERATED_META: Record<string, DemoMeta> = {
     packages: ['@vectojs/core'],
     order: 10,
   },
-  'constellation-lines': {
-    title: 'Constellation Lines',
-    description:
-      'Drifting points connect to nearby neighbors with distance-faded links — a live, switchable comparison of SpatialHashGrid neighbor queries against a naive O(n²) search, with real measured query time on screen.',
-    category: 'effects',
-    tags: ['particles', 'spatial-index', 'webgl'],
-    packages: ['@vectojs/core'],
-    order: 20,
-  },
-  'particle-text': {
-    title: 'Particle Text',
-    description:
-      'Type any two words and Transform scatters the first into a particle cloud that reforms as the second — spring-to-origin physics (ComputeParticleEntity) holds each shape together. Adjustable particle count, transform duration, and a two-stop gradient (built from several color-tinted particle buckets). The real text stays reachable through Ctrl+F and screen readers the whole time via a separate, unselectable content-projection host.',
-    category: 'effects',
-    tags: ['particles', 'webgpu', 'content-projection'],
-    packages: ['@vectojs/core'],
-    order: 30,
-  },
   'mercury-blobs': {
     title: 'Mercury Blobs',
     description:
       "Draggable silvery blobs that merge into one liquid surface when close and split apart when pulled away — a classic blur + contrast-ramp 'goo' composite, with the drag hit-testing following each blob's own circle regardless of how merged it currently looks.",
     category: 'materials',
     tags: ['goo', 'metaball', 'drag'],
-    packages: ['@vectojs/core'],
-    order: 40,
-  },
-  'ripple-text': {
-    title: 'Ripple Text',
-    description:
-      'Sine-wave text distortion with animated color gradient — characters undulate like a flag in wind',
-    category: 'effects',
-    tags: ['text', 'wave', 'gradient'],
     packages: ['@vectojs/core'],
     order: 40,
   },
@@ -83,22 +83,22 @@ export const GENERATED_META: Record<string, DemoMeta> = {
     packages: ['@vectojs/core'],
     order: 50,
   },
-  'glow-bloom': {
-    title: 'Glow Bloom',
+  'particle-text': {
+    title: 'Particle Text',
     description:
-      'Post-processing bloom effect — bright shapes bloom and bleed light into surrounding space with adjustable spread and intensity',
+      'Type any two words and Transform scatters the first into a particle cloud that reforms as the second — spring-to-origin physics (ComputeParticleEntity) holds each shape together. Adjustable particle count, transform duration, and a two-stop gradient (built from several color-tinted particle buckets). The real text stays reachable through Ctrl+F and screen readers the whole time via a separate, unselectable content-projection host.',
     category: 'effects',
-    tags: ['bloom', 'glow', 'post-processing'],
+    tags: ['particles', 'webgpu', 'content-projection'],
     packages: ['@vectojs/core'],
-    order: 60,
+    order: 30,
   },
-  'frosted-glass': {
-    title: 'Frosted Glass',
+  'ripple-text': {
+    title: 'Ripple Text',
     description:
-      'Draggable frosted-glass panels with adjustable blur, grain texture, and tilt — a translucent, etched-surface alternative to liquid glass',
-    category: 'materials',
-    tags: ['glass', 'frost', 'blur', 'grain'],
+      'Sine-wave text distortion with animated color gradient — characters undulate like a flag in wind',
+    category: 'effects',
+    tags: ['text', 'wave', 'gradient'],
     packages: ['@vectojs/core'],
-    order: 50,
+    order: 40,
   },
 };

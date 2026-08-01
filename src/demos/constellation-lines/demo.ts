@@ -1,4 +1,4 @@
-import { Scene, Entity, SpatialHashGrid } from '@vectojs/core';
+import { Scene, Entity, SpatialHashGrid, type BatchCircle, type IRenderer } from '@vectojs/core';
 
 // Constellation lines: N points drift and connect to nearby neighbors with a
 // distance-faded line. The line pass is a genuine O(n) vs O(n²) neighbor
@@ -18,12 +18,12 @@ import { Scene, Entity, SpatialHashGrid } from '@vectojs/core';
 // entirely on a throttled/skipped tick — so a probe entity's own update()
 // calls are a direct measurement of frames Scene actually rendered.
 class FrameProbe extends Entity {
-  frameTimes = [];
+  frameTimes: number[] = [];
   isPointInside() {
     return false;
   }
   render() {}
-  update(dt) {
+  update(dt: number) {
     this.frameTimes.push(dt);
     // A window this small (~330ms at 60fps) still smooths ordinary
     // frame-to-frame noise, but doesn't let the average lag behind a real
@@ -39,9 +39,9 @@ class FrameProbe extends Entity {
   }
 }
 
-const app = document.getElementById('app');
-const canvas = document.getElementById('canvas');
-const hud = document.getElementById('hud');
+const app = document.getElementById('app')!;
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const hud = document.getElementById('hud')!;
 
 const INK = '#2a2723';
 const CORAL = '#d97757';
@@ -55,7 +55,7 @@ const CORAL = '#d97757';
 const LINK_DIST = 46;
 const SPEED = 26; // px/s
 
-function hexToRGB(hex) {
+function hexToRGB(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -66,13 +66,16 @@ const [LR, LG, LB] = hexToRGB(INK);
 // which skips this entity's own render() entirely and goes straight to the
 // WebGL point layer (or the CanvasRenderer batch when WebGL is unavailable).
 class Point extends Entity {
-  constructor(x, y, vx, vy) {
+  vx: number;
+  vy: number;
+  radius = 2.2;
+
+  constructor(x: number, y: number, vx: number, vy: number) {
     super();
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.radius = 2.2;
   }
 
   // Points drift perpetually and never settle — without this override,
@@ -83,11 +86,11 @@ class Point extends Entity {
   // visibly moving. Measured before this fix: the HUD's own frame-time
   // readout showed ~400ms/frame (2fps) at rest — this was the actual
   // severe jank being reported, not a DPR or sandbox issue.
-  hasPendingAnimations() {
+  override hasPendingAnimations() {
     return true;
   }
 
-  update(dt) {
+  override update(dt: number) {
     const step = Math.min(dt, 32) / 1000;
     let nx = this.x + this.vx * step;
     let ny = this.y + this.vy * step;
@@ -110,7 +113,7 @@ class Point extends Entity {
     // Scene's point-batch fast path before render() would run.
   }
 
-  getBatchCircle() {
+  override getBatchCircle(): BatchCircle {
     return { radius: this.radius, color: CORAL };
   }
 }
@@ -122,20 +125,22 @@ class Point extends Entity {
 // point physics and the actual stroke() calls), so lastQueryMs is a clean
 // measurement of the algorithm itself.
 class LinkLines extends Entity {
-  constructor(points) {
+  points: Point[];
+  useGrid = true;
+  lastQueryMs = 0;
+  lastLineCount = 0;
+  grid = new SpatialHashGrid(LINK_DIST);
+
+  constructor(points: Point[]) {
     super('LinkLines');
     this.points = points;
-    this.useGrid = true;
-    this.lastQueryMs = 0;
-    this.lastLineCount = 0;
-    this.grid = new SpatialHashGrid(LINK_DIST);
   }
 
   isPointInside() {
     return false;
   }
 
-  render(r) {
+  render(r: IRenderer) {
     const pts = this.points;
     const n = pts.length;
     const t0 = performance.now();
@@ -144,10 +149,10 @@ class LinkLines extends Entity {
     // path per bucket and call stroke() a handful of times regardless of
     // point count, instead of once per line segment.
     const BUCKETS = 4;
-    const paths = Array.from({ length: BUCKETS }, () => []);
+    const paths: number[][] = Array.from({ length: BUCKETS }, () => []);
     let lineCount = 0;
 
-    const consider = (i, j) => {
+    const consider = (i: number, j: number) => {
       const a = pts[i];
       const b = pts[j];
       const dx = a.x - b.x;
@@ -223,10 +228,10 @@ const scene = new Scene(canvas, {
 const frameProbe = new FrameProbe();
 scene.add(frameProbe);
 
-let points = [];
-let lines = null;
+let points: Point[] = [];
+let lines: LinkLines | null = null;
 
-function spawnPoints(count) {
+function spawnPoints(count: number) {
   for (const p of points) scene.remove(p);
   if (lines) scene.remove(lines);
   const w = app.clientWidth || 800;
@@ -282,21 +287,21 @@ observer.observe(app);
 scene.start();
 
 // --- UI: point-count buttons + algorithm toggle ---
-const countButtons = {
+const countButtons: Record<string, number> = {
   'btn-count-low': 600,
   'btn-count-mid': 1500,
   'btn-count-high': 4000,
 };
 for (const [id, count] of Object.entries(countButtons)) {
-  document.getElementById(id).addEventListener('click', () => {
+  document.getElementById(id)!.addEventListener('click', () => {
     for (const other of Object.keys(countButtons)) {
-      document.getElementById(other).setAttribute('aria-pressed', String(other === id));
+      document.getElementById(other)!.setAttribute('aria-pressed', String(other === id));
     }
     spawnPoints(count);
   });
 }
 
-const algoBtn = document.getElementById('btn-algo');
+const algoBtn = document.getElementById('btn-algo')!;
 algoBtn.addEventListener('click', () => {
   if (!lines) return;
   lines.useGrid = !lines.useGrid;

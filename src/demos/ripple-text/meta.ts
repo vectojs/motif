@@ -1,4 +1,4 @@
-import type { DemoMeta } from '../types';
+import type { DemoMeta } from '../../registry/types';
 
 const meta: DemoMeta = {
   title: 'Ripple Text',

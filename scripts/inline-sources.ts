@@ -18,10 +18,13 @@ export interface DemoSources {
 }
 
 /**
- * Read every `<demosRoot>/<id>/{demo.js,index.html}` pair and return the raw
+ * Read every `<demosRoot>/<id>/{demo.ts,index.html}` pair and return the raw
  * file text keyed by demo id. Directories missing either file are skipped, so
- * a half-authored demo never emits partial sources. Raw bytes are preserved
- * verbatim so the shown code equals the code that runs in the iframe.
+ * a half-authored demo never emits partial sources. `moduleSource` holds the
+ * AUTHORED TypeScript — the better reading reference, and what the code panel
+ * shows — not the compiled JS that `copyDemosToPublic` actually serves. See
+ * AGENTS.md's "code shown = code authored; code served = its compiled
+ * output" note.
  */
 export function collectSources(demosRoot: string): Record<string, DemoSources> {
   const out: Record<string, DemoSources> = {};
@@ -29,7 +32,7 @@ export function collectSources(demosRoot: string): Record<string, DemoSources> {
   for (const entry of readdirSync(demosRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const dir = join(demosRoot, entry.name);
-    const modulePath = join(dir, 'demo.js');
+    const modulePath = join(dir, 'demo.ts');
     const htmlPath = join(dir, 'index.html');
     if (!existsSync(modulePath) || !existsSync(htmlPath)) continue;
     out[entry.name] = {
@@ -81,32 +84,76 @@ function renderMetaModule(map: Record<string, DemoMeta>): string {
 }
 
 /**
+ * Compile one authored `demo.ts` to plain `demo.js` in `destDir`, preserving
+ * comments — the demos carry load-bearing explanatory comments (physics
+ * rationale, engine-trap warnings), so a comment-stripping transpiler is the
+ * wrong tool even though it's the more obvious one:
+ *
+ * - `Bun.Transpiler`/`bun build` both strip every comment unconditionally in
+ *   bundling mode, with no flag to keep them.
+ * - `tsc --removeComments false`, run per-file (NOT via `-p tsconfig.json`,
+ *   which would bundle nothing but does pull in the workspace's ambient
+ *   types), preserves them verbatim while still erasing all type syntax.
+ *   `--ignoreConfig` silences the otherwise-fatal TS5112 caused by the
+ *   tsconfig.json sitting in this same working directory.
+ *
+ * Each file compiles standalone, not bundled, so a bare `@vectojs/*`
+ * specifier in the source passes through untouched for the browser's own
+ * importmap to resolve — exactly what index.html already declares.
+ */
+function compileDemoModule(srcPath: string, destDir: string): void {
+  execFileSync('tsc', [
+    srcPath,
+    '--outDir',
+    destDir,
+    '--module',
+    'esnext',
+    '--target',
+    'esnext',
+    '--moduleResolution',
+    'bundler',
+    '--removeComments',
+    'false',
+    '--ignoreConfig',
+  ]);
+  // tsc's own output is not house-formatted; oxfmt --write below (in main())
+  // normalizes it before it ever ships, matching every other generated file.
+}
+
+/**
  * Mirror each authored demo dir into `public/demos/<id>/` so it is served as a
  * real static route (`/demos/<id>/`) with a genuine document URL. This is what
  * the sandboxed iframe loads via `src` — a `srcdoc` iframe has base URL
  * `about:srcdoc`, so the demo's `./demo.js` and `/no-ff-webgpu.js` script refs
  * can't resolve there. `src/demos/` stays the single committed source of truth;
  * `public/demos/` is generated (gitignored) and rebuilt from scratch each run.
+ *
+ * `demo.ts` compiles to `demo.js` (see {@link compileDemoModule}); `index.html`
+ * copies verbatim, since it already references the served filename `./demo.js`
+ * and needs no changes. `meta.ts` is authoring-only and excluded either way.
  */
 function copyDemosToPublic(demosRoot: string, publicDemos: string): number {
   rmSync(publicDemos, { recursive: true, force: true });
   if (!existsSync(demosRoot)) return 0;
   let n = 0;
+  const compiledJsFiles: string[] = [];
   for (const entry of readdirSync(demosRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const dir = join(demosRoot, entry.name);
-    if (!existsSync(join(dir, 'demo.js')) || !existsSync(join(dir, 'index.html'))) continue;
-    mkdirSync(join(publicDemos, entry.name), { recursive: true });
-    // meta.ts is authoring-only metadata, not part of what the iframe loads
-    // (only demo.js + index.html are) — excluding it keeps astro check from
-    // trying to typecheck a copy that has no tsconfig path resolution from
-    // public/.
-    cpSync(dir, join(publicDemos, entry.name), {
-      recursive: true,
-      filter: (src) => !src.endsWith('meta.ts'),
-    });
+    const modulePath = join(dir, 'demo.ts');
+    const htmlPath = join(dir, 'index.html');
+    if (!existsSync(modulePath) || !existsSync(htmlPath)) continue;
+    const destDir = join(publicDemos, entry.name);
+    mkdirSync(destDir, { recursive: true });
+    cpSync(htmlPath, join(destDir, 'index.html'));
+    compileDemoModule(modulePath, destDir);
+    compiledJsFiles.push(join(destDir, 'demo.js'));
     n++;
   }
+  // One oxfmt pass over every compiled demo.js: tsc's own output uses double
+  // quotes and unwrapped lines, so this is what makes the served file match
+  // house style rather than reading as machine-generated in a diff/devtools.
+  if (compiledJsFiles.length > 0) execFileSync('oxfmt', ['--write', ...compiledJsFiles]);
   return n;
 }
 
