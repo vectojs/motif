@@ -176,16 +176,14 @@ class JellyButton extends Entity {
   }
 }
 
+// hasPendingAnimations() wakes this scene while the jellies wobble, so painting
+// only on demand is safe and costs nothing once they settle.
 const scene = new Scene(canvas, {
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
+  renderMode: 'onDemand',
 });
-// renderMode is a FIELD, not a SceneOptions key — passing it to the constructor
-// is silently ignored and leaves the scene in 'always', which then idles at
-// core's 2fps auto-throttle instead of 0. hasPendingAnimations() wakes this
-// scene while the jellies wobble, so onDemand is safe.
-scene.renderMode = 'onDemand';
 
 const jellies = [
   new JellyButton('poke', '#d97757', 74),

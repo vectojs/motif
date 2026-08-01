@@ -164,19 +164,16 @@ function roundedRect(ctx, x, y, w, h, r) {
 const app = document.getElementById('app');
 const canvas = document.getElementById('canvas');
 
+// Nothing here animates: no entity has an update(), and the panels only move
+// when dragged. Every mutation marks the scene dirty, and scene.resize() marks
+// it internally, so 'always' would just redraw an unchanged frame forever —
+// measured at a steady 2.00Hz in Chrome 150 before this was set.
 const scene = new Scene(canvas, {
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
+  renderMode: 'onDemand',
 });
-// Nothing here animates: no entity has an update(), and the panels only move
-// when dragged. Every mutation marks the scene dirty, and scene.resize() marks
-// it internally, so 'always' would just redraw an unchanged frame forever.
-//
-// renderMode is a FIELD, not a SceneOptions key. Passing it to the constructor
-// is silently ignored — measured in Chrome 150, that left this scene painting a
-// steady 2.00Hz (core's idle auto-throttle for 'always') instead of 0.
-scene.renderMode = 'onDemand';
 
 scene.add(new GradientBg());
 

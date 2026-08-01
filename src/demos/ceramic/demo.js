@@ -289,16 +289,13 @@ class CeramicToggle extends Entity {
   }
 }
 
+// Material demos are static between interactions, so paint only on demand.
 const scene = new Scene(canvas, {
   maxFPS: 60,
   disableWindowResize: true,
   maxDPR: 2,
+  renderMode: 'onDemand',
 });
-// renderMode is a FIELD, not a SceneOptions key — passing it to the constructor
-// is silently ignored and leaves the scene in 'always', which then idles at
-// core's 2fps auto-throttle instead of 0. Material demos are static between
-// interactions, so assign it after construction.
-scene.renderMode = 'onDemand';
 
 let pressed = '—';
 class Board extends Entity {
