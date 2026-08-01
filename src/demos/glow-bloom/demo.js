@@ -58,9 +58,13 @@ class BloomPipeline extends Entity {
     r.save();
     ctx.fillStyle = '#1a1a1e';
     ctx.fillRect(0, 0, W, H);
-    r.globalAlpha = this.intensity;
+    // IRenderer exposes setGlobalAlpha(a) — there is NO `globalAlpha` property.
+    // Assigning one only adds an expando to the renderer, leaving the bloom
+    // layer fully opaque; that is why the intensity slider had no visible
+    // effect (measured: ctx.globalAlpha stayed 1 at every drawImage).
+    r.setGlobalAlpha(this.intensity);
     r.drawImage(this.bloomCanvas, 0, 0, W, H);
-    r.globalAlpha = 1;
+    r.setGlobalAlpha(1);
     // IRenderer.drawImage requires the full 5-arg (source, dx, dy, dw, dh)
     // signature — unlike native CanvasRenderingContext2D.drawImage, it has
     // no 3-arg overload, so omitting dw/dh passes them through as

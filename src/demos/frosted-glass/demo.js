@@ -134,15 +134,19 @@ class FrostedPanel extends Entity {
 
     if (this.grainIntensity > 0) {
       const grain = getGrain(this.pw, this.ph);
-      r.globalAlpha = Math.min(1, this.grainIntensity * 3);
+      // IRenderer exposes setGlobalAlpha(a) — there is NO `globalAlpha`
+      // property. Assigning one just adds an expando to the renderer and the
+      // draw stays fully opaque, which is why this slider did nothing.
+      r.setGlobalAlpha(Math.min(1, this.grainIntensity * 3));
       r.drawImage(grain, 0, 0, this.pw, this.ph);
-      r.globalAlpha = 1;
+      r.setGlobalAlpha(1);
     }
 
-    r.strokeStyle = 'rgba(255,255,255,0.25)';
-    r.lineWidth = 1.5;
+    // Same class of mistake: `stroke()` takes the color and width as ARGUMENTS.
+    // `r.strokeStyle = …` / `r.lineWidth = …` were no-ops, so the rim drew with
+    // the context default (#000000 at 1px) — a black hairline, not a white rim.
     roundedRect(ctx, 0.5, 0.5, this.pw - 1, this.ph - 1, this.cr);
-    r.stroke();
+    r.stroke('rgba(255,255,255,0.25)', 1.5);
   }
 }
 
